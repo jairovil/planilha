@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Controle TV - WhatsApp + Firebase | Renovação</title>
+    <title>Controle TV - Pagamento Antecipado | Firebase + WhatsApp</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
@@ -54,15 +54,16 @@
             color: #2c6e9e;
             margin-bottom: 6px;
         }
-        .input-group input {
+        .input-group input, .input-group select {
             width: 100%;
             padding: 12px 16px;
             border: 2px solid #e2e8f0;
             border-radius: 20px;
             font-size: 0.95rem;
             transition: 0.2s;
+            font-family: 'Inter', sans-serif;
         }
-        .input-group input:focus { outline: none; border-color: #128c7e; }
+        .input-group input:focus, .input-group select:focus { outline: none; border-color: #128c7e; }
         .btn-primary {
             background: #128c7e;
             color: white;
@@ -119,6 +120,11 @@
             gap: 15px;
             border: 1px solid #ffe0b5;
         }
+        .client-card-pago {
+            opacity: 0.75;
+            background: #f0f9f0;
+            border-left: 4px solid #2ecc71;
+        }
         .client-info { display: flex; flex-wrap: wrap; align-items: baseline; gap: 15px; flex: 2; }
         .client-name {
             font-weight: 800;
@@ -128,6 +134,30 @@
             border-radius: 40px;
         }
         .due-date { background: #ffefe3; padding: 4px 12px; border-radius: 30px; font-size: 0.85rem; font-weight: 600; color: #b45f2b; }
+        .payment-date {
+            background: #d5f5e3;
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #1e7e34;
+        }
+        .badge-pago {
+            background: #2ecc71;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+        .badge-pendente {
+            background: #e67e22;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
         .btn-whatsapp {
             background: #25D366;
             border: none;
@@ -155,6 +185,17 @@
             color: #1e6f5c;
         }
         .btn-copy:hover { background: #d9e6f5; }
+        .btn-pagar {
+            background: #3498db;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-weight: 600;
+            cursor: pointer;
+            color: white;
+            font-size: 0.8rem;
+        }
+        .btn-pagar:hover { background: #2980b9; }
         .action-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
         .toast-msg {
             position: fixed;
@@ -173,12 +214,7 @@
             85% { opacity: 1; }
             100% { opacity: 0; visibility: hidden; }
         }
-        .all-clients {
-            background: white;
-            border-radius: 28px;
-            overflow: hidden;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
-        }
+        .all-clients { background: white; border-radius: 28px; overflow: hidden; box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
         .section-title {
             padding: 1.2rem 1.5rem;
             background: #f8fafc;
@@ -216,33 +252,37 @@
             color: #b71c1c;
             font-size: 0.85rem;
         }
-        .whatsapp-number-input {
-            background: #f0f9f0;
-            border-radius: 16px;
-            padding: 4px 12px;
-            font-size: 0.75rem;
+        .filters {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 1rem;
+            padding: 0 1.2rem;
         }
-        code {
-            background: #f1f1f1;
-            padding: 2px 6px;
-            border-radius: 8px;
-            font-family: monospace;
+        .filter-btn {
+            background: #e2e8f0;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+        .filter-btn.active {
+            background: #128c7e;
+            color: white;
         }
     </style>
 </head>
 <body>
 <div class="container">
     <div class="header">
-        <h1><i class="fab fa-whatsapp"></i> Controle Renovação TV · Firebase + WhatsApp</h1>
-        <p>✅ Clientes com vencimento <strong>HOJE</strong> → Copie a mensagem e abra o WhatsApp do cliente com 1 clique!</p>
+        <h1><i class="fab fa-whatsapp"></i> Controle Renovação TV · Pagamento Antecipado</h1>
+        <p>✅ Controle quem já pagou (mesmo antes do vencimento) e envie WhatsApp com mensagem personalizada</p>
         <div class="stats-badge" id="statsTotal"><i class="fas fa-spinner fa-pulse"></i> Conectando ao Firebase...</div>
     </div>
 
     <div id="alertaPermissao" style="display: none;" class="error-banner">
         <i class="fas fa-exclamation-triangle"></i> <strong>Erro de permissão no Firebase!</strong> 
-        Configure as regras do Firestore no console do Firebase:<br>
-        <code>allow read, write: if true;</code> (modo desenvolvimento) na aba "Regras".<br>
-        Cole o código abaixo e clique em "Publicar".
+        Configure as regras do Firestore: <code>allow read, write: if true;</code>
     </div>
 
     <div class="form-card">
@@ -252,13 +292,20 @@
                 <input type="text" id="nomeCliente" placeholder="Ex: Jairo Britto" autocomplete="off">
             </div>
             <div class="input-group">
-                <label><i class="fab fa-whatsapp"></i> WhatsApp (com DDD)</label>
-                <input type="tel" id="whatsappCliente" placeholder="Ex: 11999999999" autocomplete="off">
-                <small style="font-size: 0.65rem;">Apenas números, sem espaços</small>
+                <label><i class="fab fa-whatsapp"></i> WhatsApp</label>
+                <input type="tel" id="whatsappCliente" placeholder="11999999999">
+                <small style="font-size: 0.65rem;">Apenas números</small>
             </div>
             <div class="input-group">
                 <label><i class="fas fa-calendar-day"></i> Vencimento</label>
                 <input type="date" id="dataVencimento">
+            </div>
+            <div class="input-group">
+                <label><i class="fas fa-money-bill-wave"></i> Status Inicial</label>
+                <select id="statusInicial">
+                    <option value="pendente">Pendente</option>
+                    <option value="pago">Pago (antecipado ou em dia)</option>
+                </select>
             </div>
             <div class="input-group">
                 <button id="btnAdicionar" class="btn-primary"><i class="fas fa-plus-circle"></i> Adicionar</button>
@@ -269,7 +316,7 @@
 
     <div class="today-section">
         <div class="today-header">
-            <h2><i class="fas fa-bell"></i> Vencem HOJE</h2>
+            <h2><i class="fas fa-bell"></i> Vencem HOJE (Pendentes)</h2>
             <span class="today-badge" id="contagemHoje">0</span>
         </div>
         <div id="listaVencimentosHoje" class="client-cards">
@@ -279,27 +326,29 @@
 
     <div class="all-clients">
         <div class="section-title"><i class="fas fa-list-ul"></i> Todos os Clientes</div>
+        <div class="filters">
+            <button class="filter-btn active" data-filter="all">Todos</button>
+            <button class="filter-btn" data-filter="pendente">Pendentes</button>
+            <button class="filter-btn" data-filter="pago">Pagos</button>
+        </div>
         <div class="table-wrapper">
             <table>
                 <thead>
-                    <tr><th>Nome</th><th>WhatsApp</th><th>Vencimento</th><th>Status</th><th>Ações</th></tr>
+                    <tr><th>Nome</th><th>WhatsApp</th><th>Vencimento</th><th>Status</th><th>Data Pagamento</th><th>Ações</th></tr>
                 </thead>
-                <tbody id="tabelaClientesBody">
-                    <tr><td colspan="5" class="loading-row">Sincronizando...</td></tr>
-                </tbody>
+                <tbody id="tabelaClientesBody"><tr><td colspan="6" class="loading-row">Sincronizando...</td></tr></tbody>
             </table>
         </div>
     </div>
     <div class="footer-note">
-        <i class="fab fa-whatsapp"></i> Clique no botão verde para abrir WhatsApp direto + mensagem já copiada! 
-        <br><strong>Dica:</strong> Salve o número do cliente no celular para identificar na conversa.
+        <i class="fab fa-whatsapp"></i> ✅ <strong>PAGAMENTO ANTECIPADO:</strong> Clique em "Marcar Pago" para registrar pagamento antes do vencimento.<br>
+        💬 Clique no WhatsApp para copiar mensagem e abrir a conversa.
     </div>
 </div>
 
 <script type="module">
-    // ======================= FIREBASE IMPORTAÇÃO COMPLETA =======================
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     
     const firebaseConfig = {
         apiKey: "AIzaSyDdZO0Eux06YCwkZzwNVhlmytBQeCSxkjQ",
@@ -310,14 +359,13 @@
         appId: "1:682629597141:web:38cd3d6f6ee42262f31f5c"
     };
     
-    // Inicializar Firebase
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    const clientesCollection = collection(db, "clientes_tv_whatsapp_v2");
+    const clientesCollection = collection(db, "clientes_pagamentos_v3");
     
     let erroPermissao = false;
+    let filtroAtual = "all";
     
-    // Função auxiliar para exibir toast
     function exibirToast(texto) {
         const toast = document.createElement('div');
         toast.className = 'toast-msg';
@@ -353,89 +401,96 @@ Jairo Britto Santos
 Qualquer dúvida, estou à disposição!`;
     }
     
-    // Função principal: Copiar mensagem E abrir WhatsApp (se número existir)
     async function copiarMensagemEAbrirWhatsApp(nomeCliente, telefone) {
         const mensagem = gerarMensagemCliente(nomeCliente);
-        
-        // 1. Copiar mensagem para clipboard
         try {
             await navigator.clipboard.writeText(mensagem);
-            exibirToast(`📋 Mensagem copiada! Pronta para colar no WhatsApp.`);
-        } catch (err) {
-            console.warn("Falha ao copiar:", err);
-            exibirToast(`⚠️ Copie manualmente: ${mensagem.substring(0,30)}...`);
-        }
+            exibirToast(`📋 Mensagem copiada! Pronta para colar.`);
+        } catch (err) { console.warn(err); }
         
-        // 2. Se tiver telefone, abrir WhatsApp
         if (telefone && telefone.trim() !== "") {
-            let numero = telefone.replace(/\D/g, ''); // apenas números
-            if (!numero.startsWith('55')) {
-                numero = '55' + numero;
-            }
-            const whatsappUrl = `https://wa.me/${numero}`;
-            window.open(whatsappUrl, '_blank');
-            exibirToast(`💬 Abrindo WhatsApp para ${nomeCliente}. Cole a mensagem copiada!`);
+            let numero = telefone.replace(/\D/g, '');
+            if (!numero.startsWith('55')) numero = '55' + numero;
+            window.open(`https://wa.me/${numero}`, '_blank');
+            exibirToast(`💬 Abrindo WhatsApp para ${nomeCliente}`);
         } else {
-            exibirToast(`⚠️ ${nomeCliente} não tem WhatsApp cadastrado. A mensagem foi copiada.`);
+            exibirToast(`⚠️ ${nomeCliente} não tem WhatsApp cadastrado.`);
         }
     }
     
-    // Função apenas copiar
-    async function apenasCopiarMensagem(nomeCliente) {
-        const mensagem = gerarMensagemCliente(nomeCliente);
-        try {
-            await navigator.clipboard.writeText(mensagem);
-            exibirToast(`📋 Mensagem copiada! Cole onde desejar.`);
-        } catch (err) {
-            alert("Erro ao copiar: " + err);
+    async function marcarComoPago(id, nomeCliente) {
+        if (confirm(`Registrar pagamento de ${nomeCliente}? (Data de hoje)`)) {
+            try {
+                const hoje = new Date().toISOString().split('T')[0];
+                await updateDoc(doc(db, "clientes_pagamentos_v3", id), {
+                    status: "pago",
+                    dataPagamento: hoje
+                });
+                exibirToast(`✅ ${nomeCliente} marcado como PAGO!`);
+                await carregarClientesErenderizar();
+            } catch (err) {
+                alert("Erro: " + err.message);
+            }
         }
     }
     
-    // Carregar todos os clientes do Firebase
+    async function reverterPagamento(id, nomeCliente) {
+        if (confirm(`Reverter pagamento de ${nomeCliente} para pendente?`)) {
+            try {
+                await updateDoc(doc(db, "clientes_pagamentos_v3", id), {
+                    status: "pendente",
+                    dataPagamento: null
+                });
+                exibirToast(`↩️ ${nomeCliente} voltou para PENDENTE`);
+                await carregarClientesErenderizar();
+            } catch (err) {
+                alert("Erro: " + err.message);
+            }
+        }
+    }
+    
     async function carregarClientesErenderizar() {
         const tbody = document.getElementById("tabelaClientesBody");
         const containerHoje = document.getElementById("listaVencimentosHoje");
         const contagemSpan = document.getElementById("contagemHoje");
         
-        tbody.innerHTML = '<tr><td colspan="5" class="loading-row"><i class="fas fa-spinner fa-pulse"></i> Buscando dados do Firebase...</td></tr>';
-        containerHoje.innerHTML = '<div class="loading-row">Carregando vencimentos...</div>';
+        tbody.innerHTML = '<tr><td colspan="6" class="loading-row">Carregando...</td></tr>';
+        containerHoje.innerHTML = '<div class="loading-row">Carregando...</div>';
         
         try {
             const q = query(clientesCollection, orderBy("dataVencimento", "asc"));
             const querySnapshot = await getDocs(q);
             const clientes = [];
             querySnapshot.forEach(docSnap => {
-                clientes.push({
-                    id: docSnap.id,
-                    ...docSnap.data()
-                });
+                clientes.push({ id: docSnap.id, ...docSnap.data() });
             });
             
-            const total = clientes.length;
-            const venceHojeList = clientes.filter(c => isVencimentoHoje(c.dataVencimento));
-            document.getElementById("statsTotal").innerHTML = `<i class="fas fa-users"></i> Total: ${total} clientes | 🔔 Hoje: ${venceHojeList.length}`;
-            contagemSpan.innerText = venceHojeList.length;
+            const pendentes = clientes.filter(c => c.status !== "pago");
+            const venceHojePendentes = pendentes.filter(c => isVencimentoHoje(c.dataVencimento));
+            const totalPagos = clientes.filter(c => c.status === "pago").length;
             
-            // ========== RENDERIZAR CLIENTES QUE VENCEM HOJE (CARDS) ==========
-            if (venceHojeList.length === 0) {
-                containerHoje.innerHTML = `<div style="color:#b38f6b; text-align:center; padding:20px;"><i class="fas fa-check-circle"></i> Nenhum cliente vence hoje. Ótimo!</div>`;
+            document.getElementById("statsTotal").innerHTML = `<i class="fas fa-users"></i> Total: ${clientes.length} | ✅ Pagos: ${totalPagos} | ⏳ Pendentes: ${pendentes.length} | 🔔 Hoje: ${venceHojePendentes.length}`;
+            contagemSpan.innerText = venceHojePendentes.length;
+            
+            // CARDS - SOMENTE PENDENTES QUE VENCEM HOJE
+            if (venceHojePendentes.length === 0) {
+                containerHoje.innerHTML = `<div style="color:#b38f6b; text-align:center; padding:20px;"><i class="fas fa-check-circle"></i> Nenhum cliente pendente vence hoje.</div>`;
             } else {
                 let htmlCards = '';
-                venceHojeList.forEach(cli => {
-                    const telefoneExib = cli.whatsapp ? formatarTelefone(cli.whatsapp) : 'Não cadastrado';
+                venceHojePendentes.forEach(cli => {
                     htmlCards += `
-                        <div class="client-card-today" data-id="${cli.id}">
+                        <div class="client-card-today">
                             <div class="client-info">
-                                <span class="client-name"><i class="fas fa-user-circle"></i> ${escapeHtml(cli.nome)}</span>
-                                <span class="due-date"><i class="fas fa-calendar-exclamation"></i> Vence hoje: ${formatarDataBR(cli.dataVencimento)}</span>
-                                ${cli.whatsapp ? `<span class="whatsapp-number-input"><i class="fab fa-whatsapp"></i> ${telefoneExib}</span>` : '<span style="font-size:0.7rem; color:gray;">sem WhatsApp</span>'}
+                                <span class="client-name">${escapeHtml(cli.nome)}</span>
+                                <span class="due-date"><i class="fas fa-calendar"></i> Vence: ${formatarDataBR(cli.dataVencimento)}</span>
+                                ${cli.whatsapp ? `<span><i class="fab fa-whatsapp"></i> ${formatarTelefone(cli.whatsapp)}</span>` : ''}
                             </div>
                             <div class="action-buttons">
                                 <button class="btn-whatsapp" data-nome="${escapeHtml(cli.nome)}" data-whats="${cli.whatsapp || ''}">
-                                    <i class="fab fa-whatsapp"></i> Enviar + Copiar
+                                    <i class="fab fa-whatsapp"></i> Enviar
                                 </button>
-                                <button class="btn-copy" data-nome="${escapeHtml(cli.nome)}">
-                                    <i class="fas fa-copy"></i> Só Copiar
+                                <button class="btn-pagar" data-id="${cli.id}" data-nome="${escapeHtml(cli.nome)}">
+                                    <i class="fas fa-check-circle"></i> Pagou (Antecipado)
                                 </button>
                             </div>
                         </div>
@@ -443,79 +498,100 @@ Qualquer dúvida, estou à disposição!`;
                 });
                 containerHoje.innerHTML = htmlCards;
                 
-                // Adicionar eventos aos botões dos cards
                 document.querySelectorAll('.btn-whatsapp').forEach(btn => {
-                    btn.addEventListener('click', async (e) => {
+                    btn.addEventListener('click', (e) => {
                         const nome = btn.getAttribute('data-nome');
                         const whats = btn.getAttribute('data-whats');
-                        await copiarMensagemEAbrirWhatsApp(nome, whats);
+                        copiarMensagemEAbrirWhatsApp(nome, whats);
                     });
                 });
-                document.querySelectorAll('.btn-copy').forEach(btn => {
-                    btn.addEventListener('click', async () => {
+                document.querySelectorAll('.btn-pagar').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const id = btn.getAttribute('data-id');
                         const nome = btn.getAttribute('data-nome');
-                        await apenasCopiarMensagem(nome);
+                        marcarComoPago(id, nome);
                     });
                 });
             }
             
-            // ========== RENDERIZAR TABELA COMPLETA ==========
-            if (clientes.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="empty-row">Nenhum cliente cadastrado. Adicione usando o formulário.</td></tr>';
+            // TABELA COM FILTRO
+            let clientesFiltrados = clientes;
+            if (filtroAtual === "pendente") clientesFiltrados = clientes.filter(c => c.status !== "pago");
+            if (filtroAtual === "pago") clientesFiltrados = clientes.filter(c => c.status === "pago");
+            
+            if (clientesFiltrados.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="empty-row">Nenhum cliente encontrado</td></tr>';
             } else {
                 let tabelaHtml = '';
-                clientes.forEach(cli => {
+                clientesFiltrados.forEach(cli => {
                     const hojeFlag = isVencimentoHoje(cli.dataVencimento);
-                    const statusBadge = hojeFlag ? '<span style="background:#ff8c42; padding:4px 10px; border-radius:20px; color:white;"><i class="fas fa-bell"></i> Vence hoje</span>' : '<span style="background:#e2e8f0; padding:4px 10px; border-radius:20px;">Normal</span>';
-                    const telefoneFormatado = cli.whatsapp ? formatarTelefone(cli.whatsapp) : '—';
+                    const isPago = cli.status === "pago";
+                    let statusHtml = isPago ? '<span class="badge-pago"><i class="fas fa-check"></i> PAGO</span>' : '<span class="badge-pendente"><i class="fas fa-clock"></i> Pendente</span>';
+                    const dataPagto = cli.dataPagamento ? formatarDataBR(cli.dataPagamento) : '—';
+                    const telefoneFmt = cli.whatsapp ? formatarTelefone(cli.whatsapp) : '—';
+                    
                     tabelaHtml += `
-                        <tr data-id="${cli.id}">
-                            <td><strong>${escapeHtml(cli.nome)}</strong></td>
-                            <td><i class="fab fa-whatsapp"></i> ${escapeHtml(telefoneFormatado)}</td>
+                        <tr style="${isPago ? 'background:#f8fff8;' : ''}">
+                            <td><strong>${escapeHtml(cli.nome)}</strong>${hojeFlag && !isPago ? ' <i class="fas fa-bell" style="color:#ff8c42;"></i>' : ''}</td>
+                            <td><i class="fab fa-whatsapp"></i> ${escapeHtml(telefoneFmt)}</td>
                             <td>${formatarDataBR(cli.dataVencimento)}</td>
-                            <td>${statusBadge}</td>
+                            <td>${statusHtml}</td>
+                            <td>${dataPagto}</td>
                             <td>
-                                <button class="btn-whatsapp-table" data-nome="${escapeHtml(cli.nome)}" data-whats="${cli.whatsapp || ''}" style="background:#25D366; color:white; border:none; padding:6px 12px; border-radius:30px; margin-right:8px; cursor:pointer;">
-                                    <i class="fab fa-whatsapp"></i> WhatsApp
+                                <button class="btn-whatsapp-table" data-nome="${escapeHtml(cli.nome)}" data-whats="${cli.whatsapp || ''}" style="background:#25D366; color:white; border:none; padding:6px 12px; border-radius:30px; margin-right:6px; cursor:pointer;">
+                                    <i class="fab fa-whatsapp"></i>
                                 </button>
-                                <button class="delete-btn" data-id="${cli.id}" data-nome="${escapeHtml(cli.nome)}"><i class="fas fa-trash-alt"></i> Excluir</button>
-                            </td>
-                        </tr>
+                                ${!isPago ? `<button class="btn-pagar-table" data-id="${cli.id}" data-nome="${escapeHtml(cli.nome)}" style="background:#3498db; color:white; border:none; padding:6px 12px; border-radius:30px; margin-right:6px; cursor:pointer;">
+                                    <i class="fas fa-dollar-sign"></i> Pagar
+                                </button>` : `<button class="btn-reverter-table" data-id="${cli.id}" data-nome="${escapeHtml(cli.nome)}" style="background:#e67e22; color:white; border:none; padding:6px 12px; border-radius:30px; margin-right:6px; cursor:pointer;">
+                                    <i class="fas fa-undo"></i> Reverter
+                                </button>`}
+                                <button class="delete-btn" data-id="${cli.id}" data-nome="${escapeHtml(cli.nome)}"><i class="fas fa-trash-alt"></i></button>
+                             </td>
+                         </tr>
                     `;
                 });
                 tbody.innerHTML = tabelaHtml;
                 
-                // Eventos da tabela
                 document.querySelectorAll('.btn-whatsapp-table').forEach(btn => {
-                    btn.addEventListener('click', async (e) => {
+                    btn.addEventListener('click', (e) => {
                         const nome = btn.getAttribute('data-nome');
                         const whats = btn.getAttribute('data-whats');
-                        await copiarMensagemEAbrirWhatsApp(nome, whats);
+                        copiarMensagemEAbrirWhatsApp(nome, whats);
+                    });
+                });
+                document.querySelectorAll('.btn-pagar-table').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const id = btn.getAttribute('data-id');
+                        const nome = btn.getAttribute('data-nome');
+                        marcarComoPago(id, nome);
+                    });
+                });
+                document.querySelectorAll('.btn-reverter-table').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const id = btn.getAttribute('data-id');
+                        const nome = btn.getAttribute('data-nome');
+                        reverterPagamento(id, nome);
                     });
                 });
                 document.querySelectorAll('.delete-btn').forEach(btn => {
                     btn.addEventListener('click', async (e) => {
                         const id = btn.getAttribute('data-id');
-                        const nomeCliente = btn.getAttribute('data-nome');
-                        if (confirm(`Excluir "${nomeCliente}" permanentemente?`)) {
-                            await excluirClienteFirestore(id);
+                        const nome = btn.getAttribute('data-nome');
+                        if (confirm(`Excluir ${nome}?`)) {
+                            await deleteDoc(doc(db, "clientes_pagamentos_v3", id));
+                            exibirToast(`🗑️ ${nome} removido`);
+                            await carregarClientesErenderizar();
                         }
                     });
                 });
             }
-            
             erroPermissao = false;
             document.getElementById("alertaPermissao").style.display = "none";
-            
         } catch (error) {
-            console.error("Erro Firebase:", error);
             if (error.code === 'permission-denied') {
                 document.getElementById("alertaPermissao").style.display = "block";
-                tbody.innerHTML = '<tr><td colspan="5" class="empty-row">⚠️ Permissão negada! Configure as regras do Firestore: allow read, write: if true;</td></tr>';
-                containerHoje.innerHTML = '<div class="error-banner">Erro de permissão. Verifique as regras do Firebase.</div>';
-                document.getElementById("statsTotal").innerHTML = `⚠️ Erro de conexão`;
-            } else {
-                tbody.innerHTML = `<tr><td colspan="5" class="empty-row">Erro: ${error.message}</td></tr>`;
+                tbody.innerHTML = '<tr><td colspan="6" class="empty-row">⚠️ Permissão negada! Configure as regras do Firestore.</td></tr>';
             }
             erroPermissao = true;
         }
@@ -529,117 +605,72 @@ Qualquer dúvida, estou à disposição!`;
         return numero;
     }
     
-    async function adicionarClienteFirestore(nome, whatsapp, dataVenc) {
-        if (!nome.trim()) { alert("Digite o nome do cliente."); return false; }
-        if (!dataVenc) { alert("Selecione a data de vencimento."); return false; }
-        
+    async function adicionarClienteFirestore(nome, whatsapp, dataVenc, status) {
+        if (!nome.trim()) { alert("Digite o nome"); return false; }
+        if (!dataVenc) { alert("Selecione a data"); return false; }
         let telefoneLimpo = whatsapp ? whatsapp.replace(/\D/g, '') : '';
-        if (telefoneLimpo && !telefoneLimpo.startsWith('55') && telefoneLimpo.length >= 10) {
-            telefoneLimpo = '55' + telefoneLimpo;
-        }
-        
+        if (telefoneLimpo && !telefoneLimpo.startsWith('55') && telefoneLimpo.length >= 10) telefoneLimpo = '55' + telefoneLimpo;
+        const dataPagamento = status === "pago" ? new Date().toISOString().split('T')[0] : null;
         try {
             await addDoc(clientesCollection, {
                 nome: nome.trim(),
                 whatsapp: telefoneLimpo,
                 dataVencimento: dataVenc,
+                status: status,
+                dataPagamento: dataPagamento,
                 criadoEm: new Date().toISOString()
             });
-            exibirToast(`✅ ${nome} adicionado com sucesso!`);
+            exibirToast(`✅ ${nome} adicionado!`);
             await carregarClientesErenderizar();
             return true;
         } catch (err) {
-            if (err.code === 'permission-denied') {
-                alert("Permissão negada! Configure as regras do Firestore.");
-                document.getElementById("alertaPermissao").style.display = "block";
-            } else {
-                alert("Erro ao adicionar: " + err.message);
-            }
+            alert("Erro: " + err.message);
             return false;
         }
     }
     
-    async function excluirClienteFirestore(id) {
-        try {
-            await deleteDoc(doc(db, "clientes_tv_whatsapp_v2", id));
-            exibirToast("Cliente removido com sucesso.");
-            await carregarClientesErenderizar();
-        } catch (err) {
-            alert("Erro ao excluir: " + err.message);
-        }
-    }
-    
     async function adicionarDezClientesAleatorios() {
-        if (erroPermissao) {
-            alert("Resolva o erro de permissão do Firebase primeiro.");
-            return;
-        }
-        
-        const nomesBase = [
-            "Ana Clara Menezes", "Roberto Nunes", "Juliana Prado", "Marcos Vinicius", "Patrícia Lins",
-            "Felipe Augusto", "Camila Rocha", "Ricardo Nogueira", "Larissa Mendes", "Thiago Braga"
-        ];
-        const telefonesBase = ["11999998888", "21977776666", "31955554444", "11988887777", "21966665555", 
-                               "31944443333", "11933332222", "21922221111", "31911110000", "11900009999"];
-        
-        let adicionados = 0;
+        const nomes = ["Ana Clara", "Roberto Nunes", "Juliana Prado", "Marcos Vinicius", "Patrícia Lins", "Felipe Augusto", "Camila Rocha", "Ricardo Nogueira", "Larissa Mendes", "Thiago Braga"];
+        const teles = ["11999998888", "21977776666", "31955554444", "11988887777", "21966665555", "31944443333", "11933332222", "21922221111", "31911110000", "11900009999"];
         for (let i = 0; i < 10; i++) {
-            const nomeRand = nomesBase[i % nomesBase.length] + " " + Math.floor(Math.random() * 100);
-            const telRand = telefonesBase[Math.floor(Math.random() * telefonesBase.length)];
-            const diasOffset = Math.floor(Math.random() * 31);
-            const dataFutura = new Date();
-            dataFutura.setDate(dataFutura.getDate() + diasOffset);
-            const dataStr = dataFutura.toISOString().split('T')[0];
-            try {
-                await addDoc(clientesCollection, {
-                    nome: nomeRand,
-                    whatsapp: telRand,
-                    dataVencimento: dataStr,
-                    criadoEm: new Date().toISOString()
-                });
-                adicionados++;
-            } catch(e) { console.warn(e); }
+            const nome = nomes[i % nomes.length] + " " + Math.floor(Math.random() * 100);
+            const tel = teles[Math.floor(Math.random() * teles.length)];
+            const dias = Math.floor(Math.random() * 31);
+            const data = new Date(); data.setDate(data.getDate() + dias);
+            const statusRand = Math.random() > 0.7 ? "pago" : "pendente";
+            const dataPag = statusRand === "pago" ? new Date().toISOString().split('T')[0] : null;
+            await addDoc(clientesCollection, { nome, whatsapp: tel, dataVencimento: data.toISOString().split('T')[0], status: statusRand, dataPagamento: dataPag, criadoEm: new Date().toISOString() });
         }
-        exibirToast(`✨ ${adicionados} clientes aleatórios adicionados com WhatsApp!`);
+        exibirToast("✨ 10 clientes aleatórios adicionados!");
         await carregarClientesErenderizar();
     }
     
-    function escapeHtml(str) {
-        if (!str) return '';
-        return str.replace(/[&<>]/g, function(m) {
-            if (m === '&') return '&amp;';
-            if (m === '<') return '&lt;';
-            if (m === '>') return '&gt;';
-            return m;
-        });
-    }
+    function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); }
     
-    // Eventos dos botões principais
     document.getElementById("btnAdicionar").addEventListener("click", async () => {
-        const nome = document.getElementById("nomeCliente").value;
-        const whats = document.getElementById("whatsappCliente").value;
-        const data = document.getElementById("dataVencimento").value;
-        const sucesso = await adicionarClienteFirestore(nome, whats, data);
-        if (sucesso) {
-            document.getElementById("nomeCliente").value = "";
-            document.getElementById("whatsappCliente").value = "";
-            document.getElementById("dataVencimento").value = new Date().toISOString().split('T')[0];
-        }
+        await adicionarClienteFirestore(
+            document.getElementById("nomeCliente").value,
+            document.getElementById("whatsappCliente").value,
+            document.getElementById("dataVencimento").value,
+            document.getElementById("statusInicial").value
+        );
+        document.getElementById("nomeCliente").value = "";
+        document.getElementById("whatsappCliente").value = "";
+    });
+    document.getElementById("btnAdicionarAleatorio").addEventListener("click", adicionarDezClientesAleatorios);
+    document.getElementById("dataVencimento").value = new Date().toISOString().split('T')[0];
+    
+    document.querySelectorAll(".filter-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+            document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            filtroAtual = btn.getAttribute("data-filter");
+            carregarClientesErenderizar();
+        });
     });
     
-    document.getElementById("btnAdicionarAleatorio").addEventListener("click", adicionarDezClientesAleatorios);
-    
-    // Inicializar com data atual
-    const hojeInput = new Date().toISOString().split('T')[0];
-    document.getElementById("dataVencimento").value = hojeInput;
-    
-    // Carregar dados do Firebase
     carregarClientesErenderizar();
-    
-    // Atualizar automaticamente a cada 30 segundos (para verificar novos vencimentos "hoje")
-    setInterval(() => {
-        if (!erroPermissao) carregarClientesErenderizar();
-    }, 30000);
+    setInterval(() => { if (!erroPermissao) carregarClientesErenderizar(); }, 30000);
 </script>
 </body>
 </html>
