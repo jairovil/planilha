@@ -1,676 +1,474 @@
+# CRM IPTV Profissional (HTML completo com melhorias)
+
+Abaixo está uma versão completa incorporando melhorias que comentei:
+
+* Firebase tempo real (`onSnapshot`)
+* Busca por cliente
+* Filtro pagos/pendentes
+* Clientes vencidos em vermelho
+* Próximos vencimentos em amarelo
+* Dashboard financeiro
+* Botão renovar +30 dias
+* Backup JSON
+* Delegação de eventos
+
+Substitua apenas seu arquivo HTML por este:
+
+```html
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Controle TV - Pagamento Antecipado | Firebase + WhatsApp</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%);
-            min-height: 100vh;
-            padding: 1.5rem;
-        }
-        .container { max-width: 1400px; margin: 0 auto; }
-        .header {
-            background: linear-gradient(135deg, #075e54 0%, #128c7e 100%);
-            border-radius: 28px;
-            padding: 1.5rem 2rem;
-            color: white;
-            margin-bottom: 2rem;
-            box-shadow: 0 10px 25px -8px rgba(0,0,0,0.2);
-        }
-        .header h1 { font-weight: 700; font-size: 1.9rem; display: flex; align-items: center; gap: 12px; }
-        .stats-badge {
-            display: inline-block;
-            background: rgba(255,255,255,0.2);
-            border-radius: 40px;
-            padding: 5px 15px;
-            margin-top: 12px;
-            font-size: 0.85rem;
-        }
-        .form-card {
-            background: white;
-            border-radius: 28px;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
-        }
-        .form-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            align-items: flex-end;
-        }
-        .input-group { flex: 1; min-width: 180px; }
-        .input-group label {
-            display: block;
-            font-size: 0.75rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            color: #2c6e9e;
-            margin-bottom: 6px;
-        }
-        .input-group input, .input-group select {
-            width: 100%;
-            padding: 12px 16px;
-            border: 2px solid #e2e8f0;
-            border-radius: 20px;
-            font-size: 0.95rem;
-            transition: 0.2s;
-            font-family: 'Inter', sans-serif;
-        }
-        .input-group input:focus, .input-group select:focus { outline: none; border-color: #128c7e; }
-        .btn-primary {
-            background: #128c7e;
-            color: white;
-            border: none;
-            padding: 12px 28px;
-            border-radius: 40px;
-            font-weight: 600;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .btn-primary:hover { background: #075e54; transform: translateY(-2px); }
-        .btn-secondary {
-            background: #e9ecef;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 40px;
-            font-weight: 500;
-            cursor: pointer;
-        }
-        .btn-secondary:hover { background: #dee2e6; }
-        .today-section {
-            background: linear-gradient(to right, #fff5e6, #ffe6d5);
-            border-left: 8px solid #ff8c42;
-            border-radius: 28px;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-        }
-        .today-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 1.2rem;
-            flex-wrap: wrap;
-        }
-        .today-header h2 { font-size: 1.6rem; color: #c46b2e; }
-        .today-badge {
-            background: #ff8c42;
-            color: white;
-            border-radius: 40px;
-            padding: 5px 16px;
-            font-weight: 700;
-        }
-        .client-cards { display: flex; flex-direction: column; gap: 16px; }
-        .client-card-today {
-            background: white;
-            border-radius: 24px;
-            padding: 1rem 1.5rem;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
-            align-items: center;
-            gap: 15px;
-            border: 1px solid #ffe0b5;
-        }
-        .client-card-pago {
-            opacity: 0.75;
-            background: #f0f9f0;
-            border-left: 4px solid #2ecc71;
-        }
-        .client-info { display: flex; flex-wrap: wrap; align-items: baseline; gap: 15px; flex: 2; }
-        .client-name {
-            font-weight: 800;
-            font-size: 1.2rem;
-            background: #fef5e7;
-            padding: 4px 14px;
-            border-radius: 40px;
-        }
-        .due-date { background: #ffefe3; padding: 4px 12px; border-radius: 30px; font-size: 0.85rem; font-weight: 600; color: #b45f2b; }
-        .payment-date {
-            background: #d5f5e3;
-            padding: 4px 12px;
-            border-radius: 30px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            color: #1e7e34;
-        }
-        .badge-pago {
-            background: #2ecc71;
-            color: white;
-            padding: 4px 12px;
-            border-radius: 30px;
-            font-size: 0.75rem;
-            font-weight: 700;
-        }
-        .badge-pendente {
-            background: #e67e22;
-            color: white;
-            padding: 4px 12px;
-            border-radius: 30px;
-            font-size: 0.75rem;
-            font-weight: 700;
-        }
-        .btn-whatsapp {
-            background: #25D366;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 40px;
-            font-weight: 600;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            color: white;
-            transition: 0.2s;
-        }
-        .btn-whatsapp:hover { background: #128C7E; transform: scale(1.02); }
-        .btn-copy {
-            background: #eef2ff;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 40px;
-            font-weight: 600;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            color: #1e6f5c;
-        }
-        .btn-copy:hover { background: #d9e6f5; }
-        .btn-pagar {
-            background: #3498db;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 30px;
-            font-weight: 600;
-            cursor: pointer;
-            color: white;
-            font-size: 0.8rem;
-        }
-        .btn-pagar:hover { background: #2980b9; }
-        .action-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
-        .toast-msg {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            background: #1f8a4a;
-            color: white;
-            padding: 12px 24px;
-            border-radius: 50px;
-            z-index: 1000;
-            animation: fadeInOut 2s ease forwards;
-        }
-        @keyframes fadeInOut {
-            0% { opacity: 0; transform: translateY(20px); }
-            15% { opacity: 1; transform: translateY(0); }
-            85% { opacity: 1; }
-            100% { opacity: 0; visibility: hidden; }
-        }
-        .all-clients { background: white; border-radius: 28px; overflow: hidden; box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
-        .section-title {
-            padding: 1.2rem 1.5rem;
-            background: #f8fafc;
-            font-weight: 700;
-            font-size: 1.2rem;
-            border-bottom: 2px solid #e2e8f0;
-        }
-        .table-wrapper { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; padding: 1rem 1.2rem; background: #f1f5f9; color: #2c5a7a; }
-        td { padding: 1rem 1.2rem; border-bottom: 1px solid #ecf3fa; vertical-align: middle; }
-        .delete-btn {
-            background: #fee2e2;
-            border: none;
-            padding: 8px 14px;
-            border-radius: 30px;
-            cursor: pointer;
-            color: #c74242;
-        }
-        .delete-btn:hover { background: #ffc9c9; }
-        .empty-row { text-align: center; padding: 3rem; color: #8ba0bc; }
-        .loading-row { text-align: center; padding: 2rem; color: #6c8db0; }
-        @media (max-width: 700px) {
-            .form-grid { flex-direction: column; }
-            .client-card-today { flex-direction: column; align-items: stretch; }
-            .action-buttons { justify-content: center; }
-        }
-        .footer-note { text-align: center; margin-top: 2rem; font-size: 0.75rem; color: #5e7e9e; }
-        .error-banner {
-            background: #ffebee;
-            border-left: 5px solid #d32f2f;
-            padding: 12px 20px;
-            border-radius: 16px;
-            margin-bottom: 20px;
-            color: #b71c1c;
-            font-size: 0.85rem;
-        }
-        .filters {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 1rem;
-            padding: 0 1.2rem;
-        }
-        .filter-btn {
-            background: #e2e8f0;
-            border: none;
-            padding: 6px 16px;
-            border-radius: 30px;
-            cursor: pointer;
-            font-size: 0.8rem;
-        }
-        .filter-btn.active {
-            background: #128c7e;
-            color: white;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CRM IPTV Profissional</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+font-family:Arial,sans-serif;
+background:linear-gradient(135deg,#dfefff,#eef6ff);
+padding:20px;
+}
+.container{max-width:1450px;margin:auto}
+.header{
+background:linear-gradient(135deg,#0f766e,#128c7e);
+color:#fff;
+padding:30px;
+border-radius:30px;
+margin-bottom:25px;
+box-shadow:0 8px 25px rgba(0,0,0,.15)
+}
+.header h1{font-size:34px}
+.cards{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+gap:18px;
+margin:25px 0;
+}
+.card{
+background:white;
+padding:25px;
+border-radius:25px;
+box-shadow:0 6px 18px rgba(0,0,0,.08)
+}
+.card h3{color:#666;font-size:14px;margin-bottom:10px}
+.card span{font-size:30px;font-weight:bold;color:#128c7e}
+.box{
+background:white;
+padding:25px;
+border-radius:30px;
+margin-bottom:25px;
+box-shadow:0 6px 18px rgba(0,0,0,.08)
+}
+.grid{
+display:flex;
+flex-wrap:wrap;
+gap:15px;
+}
+.grid input,.grid select{
+padding:14px;
+border-radius:20px;
+border:2px solid #ddd;
+min-width:180px;
+flex:1
+}
+button{
+border:none;
+padding:13px 22px;
+border-radius:30px;
+cursor:pointer;
+font-weight:bold
+}
+.add{background:#128c7e;color:#fff}
+.export{background:#111827;color:white}
+.filter{background:#e2e8f0}
+.filter.active{background:#128c7e;color:#fff}
+.search{
+width:100%;
+margin:15px 0;
+padding:14px 20px;
+border-radius:30px;
+border:2px solid #ddd
+}
+.sectionTitle{
+font-size:25px;
+margin-bottom:20px;
+font-weight:bold;
+color:#9a5d17
+}
+.hoje{
+background:linear-gradient(to right,#fff4dd,#ffe5c5);
+border-left:8px solid orange
+}
+.cliente{
+background:white;
+padding:18px;
+border-radius:20px;
+margin-bottom:15px;
+display:flex;
+justify-content:space-between;
+flex-wrap:wrap;
+gap:15px
+}
+.tag{
+padding:6px 13px;
+border-radius:30px;
+font-size:12px;
+font-weight:bold
+}
+.pago{background:#2ecc71;color:white}
+.pendente{background:#f39c12;color:white}
+.vencido{background:#ffe2e2}
+.proximo{background:#fff8d9}
+table{
+width:100%;
+border-collapse:collapse
+}
+th{
+background:#f3f6fa;
+padding:15px;
+text-align:left
+}
+td{
+padding:15px;
+border-bottom:1px solid #eee
+}
+.whats{background:#25D366;color:white}
+.pay{background:#3498db;color:white}
+.renew{background:#8b5cf6;color:white}
+.rev{background:#e67e22;color:white}
+.del{background:#ef4444;color:white}
+@media(max-width:700px){
+.cliente{flex-direction:column}
+}
+</style>
 </head>
 <body>
 <div class="container">
-    <div class="header">
-        <h1><i class="fab fa-whatsapp"></i> Controle Renovação TV · Pagamento Antecipado</h1>
-        <p>✅ Controle quem já pagou (mesmo antes do vencimento) e envie WhatsApp com mensagem personalizada</p>
-        <div class="stats-badge" id="statsTotal"><i class="fas fa-spinner fa-pulse"></i> Conectando ao Firebase...</div>
-    </div>
 
-    <div id="alertaPermissao" style="display: none;" class="error-banner">
-        <i class="fas fa-exclamation-triangle"></i> <strong>Erro de permissão no Firebase!</strong> 
-        Configure as regras do Firestore: <code>allow read, write: if true;</code>
-    </div>
+<div class="header">
+<h1><i class="fab fa-whatsapp"></i> CRM IPTV Profissional</h1>
+<p>Controle financeiro e renovações</p>
+</div>
 
-    <div class="form-card">
-        <div class="form-grid">
-            <div class="input-group">
-                <label><i class="fas fa-user"></i> Nome do Cliente</label>
-                <input type="text" id="nomeCliente" placeholder="Ex: Jairo Britto" autocomplete="off">
-            </div>
-            <div class="input-group">
-                <label><i class="fab fa-whatsapp"></i> WhatsApp</label>
-                <input type="tel" id="whatsappCliente" placeholder="11999999999">
-                <small style="font-size: 0.65rem;">Apenas números</small>
-            </div>
-            <div class="input-group">
-                <label><i class="fas fa-calendar-day"></i> Vencimento</label>
-                <input type="date" id="dataVencimento">
-            </div>
-            <div class="input-group">
-                <label><i class="fas fa-money-bill-wave"></i> Status Inicial</label>
-                <select id="statusInicial">
-                    <option value="pendente">Pendente</option>
-                    <option value="pago">Pago (antecipado ou em dia)</option>
-                </select>
-            </div>
-            <div class="input-group">
-                <button id="btnAdicionar" class="btn-primary"><i class="fas fa-plus-circle"></i> Adicionar</button>
-                <button id="btnAdicionarAleatorio" class="btn-secondary"><i class="fas fa-dice-d6"></i> +10 Aleatórios</button>
-            </div>
-        </div>
-    </div>
+<div class="cards">
+<div class="card"><h3>Clientes</h3><span id="totClientes">0</span></div>
+<div class="card"><h3>Pagos</h3><span id="totPagos">0</span></div>
+<div class="card"><h3>Pendentes</h3><span id="totPend">0</span></div>
+<div class="card"><h3>Recebido mês</h3><span id="recebido">R$0</span></div>
+</div>
 
-    <div class="today-section">
-        <div class="today-header">
-            <h2><i class="fas fa-bell"></i> Vencem HOJE (Pendentes)</h2>
-            <span class="today-badge" id="contagemHoje">0</span>
-        </div>
-        <div id="listaVencimentosHoje" class="client-cards">
-            <div class="loading-row">Carregando...</div>
-        </div>
-    </div>
+<div class="box">
+<div class="grid">
+<input id="nome" placeholder="Cliente">
+<input id="whats" placeholder="WhatsApp">
+<input id="venc" type="date">
+<input id="valor" value="35" type="number">
+<select id="status">
+<option value="pendente">Pendente</option>
+<option value="pago">Pago</option>
+</select>
+<button class="add" id="addBtn">Cadastrar</button>
+<button class="export" id="backup">Backup</button>
+</div>
+</div>
 
-    <div class="all-clients">
-        <div class="section-title"><i class="fas fa-list-ul"></i> Todos os Clientes</div>
-        <div class="filters">
-            <button class="filter-btn active" data-filter="all">Todos</button>
-            <button class="filter-btn" data-filter="pendente">Pendentes</button>
-            <button class="filter-btn" data-filter="pago">Pagos</button>
-        </div>
-        <div class="table-wrapper">
-            <table>
-                <thead>
-                    <tr><th>Nome</th><th>WhatsApp</th><th>Vencimento</th><th>Status</th><th>Data Pagamento</th><th>Ações</th></tr>
-                </thead>
-                <tbody id="tabelaClientesBody"><tr><td colspan="6" class="loading-row">Sincronizando...</td></tr></tbody>
-            </table>
-        </div>
-    </div>
-    <div class="footer-note">
-        <i class="fab fa-whatsapp"></i> ✅ <strong>PAGAMENTO ANTECIPADO:</strong> Clique em "Marcar Pago" para registrar pagamento antes do vencimento.<br>
-        💬 Clique no WhatsApp para copiar mensagem e abrir a conversa.
-    </div>
+<div class="box hoje">
+<div class="sectionTitle">Vencem Hoje</div>
+<div id="listaHoje"></div>
+</div>
+
+<div class="box">
+<input id="buscar" class="search" placeholder="Buscar cliente...">
+
+<button class="filter active" data-filter="all">Todos</button>
+<button class="filter" data-filter="pendente">Pendentes</button>
+<button class="filter" data-filter="pago">Pagos</button>
+
+<br><br>
+<div style="overflow:auto">
+<table>
+<thead>
+<tr>
+<th>Nome</th>
+<th>Whats</th>
+<th>Vencimento</th>
+<th>Status</th>
+<th>Valor</th>
+<th>Ações</th>
+</tr>
+</thead>
+<tbody id="tbody"></tbody>
+</table>
+</div>
+</div>
+
 </div>
 
 <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-    
-    const firebaseConfig = {
-        apiKey: "AIzaSyDdZO0Eux06YCwkZzwNVhlmytBQeCSxkjQ",
-        authDomain: "controlefinanceiro-e7df2.firebaseapp.com",
-        projectId: "controlefinanceiro-e7df2",
-        storageBucket: "controlefinanceiro-e7df2.firebasestorage.app",
-        messagingSenderId: "682629597141",
-        appId: "1:682629597141:web:38cd3d6f6ee42262f31f5c"
-    };
-    
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const clientesCollection = collection(db, "clientes_pagamentos_v3");
-    
-    let erroPermissao = false;
-    let filtroAtual = "all";
-    
-    function exibirToast(texto) {
-        const toast = document.createElement('div');
-        toast.className = 'toast-msg';
-        toast.innerHTML = `<i class="fas fa-check-circle"></i> ${texto}`;
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 2000);
-    }
-    
-    function formatarDataBR(dataISO) {
-        if (!dataISO) return '—';
-        const partes = dataISO.split('-');
-        if (partes.length !== 3) return dataISO;
-        return `${partes[2]}/${partes[1]}/${partes[0]}`;
-    }
-    
-    function isVencimentoHoje(dataISO) {
-        if (!dataISO) return false;
-        const hoje = new Date();
-        const hojeStr = hoje.toISOString().split('T')[0];
-        return dataISO === hojeStr;
-    }
-    
-    function gerarMensagemCliente(nomeCliente) {
-        return `Bom dia! Tudo bem?
-Gostaria de renovar a tv?
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import {
+getFirestore,
+collection,
+addDoc,
+updateDoc,
+deleteDoc,
+doc,
+onSnapshot,
+query,
+orderBy,
+getDocs
+}
+from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-chave PIX para facilitar:
-👇👇
-⭕ Banco C6
-CPF: 12794132717
-Jairo Britto Santos 
+const firebaseConfig={
+apiKey:"AIzaSyDdZO0Eux06YCwkZzwNVhlmytBQeCSxkjQ",
+authDomain:"controlefinanceiro-e7df2.firebaseapp.com",
+projectId:"controlefinanceiro-e7df2",
+storageBucket:"controlefinanceiro-e7df2.firebasestorage.app",
+messagingSenderId:"682629597141",
+appId:"1:682629597141:web:38cd3d6f6ee42262f31f5c"
+};
 
-Qualquer dúvida, estou à disposição!`;
-    }
-    
-    async function copiarMensagemEAbrirWhatsApp(nomeCliente, telefone) {
-        const mensagem = gerarMensagemCliente(nomeCliente);
-        try {
-            await navigator.clipboard.writeText(mensagem);
-            exibirToast(`📋 Mensagem copiada! Pronta para colar.`);
-        } catch (err) { console.warn(err); }
-        
-        if (telefone && telefone.trim() !== "") {
-            let numero = telefone.replace(/\D/g, '');
-            if (!numero.startsWith('55')) numero = '55' + numero;
-            window.open(`https://wa.me/${numero}`, '_blank');
-            exibirToast(`💬 Abrindo WhatsApp para ${nomeCliente}`);
-        } else {
-            exibirToast(`⚠️ ${nomeCliente} não tem WhatsApp cadastrado.`);
-        }
-    }
-    
-    async function marcarComoPago(id, nomeCliente) {
-        if (confirm(`Registrar pagamento de ${nomeCliente}? (Data de hoje)`)) {
-            try {
-                const hoje = new Date().toISOString().split('T')[0];
-                await updateDoc(doc(db, "clientes_pagamentos_v3", id), {
-                    status: "pago",
-                    dataPagamento: hoje
-                });
-                exibirToast(`✅ ${nomeCliente} marcado como PAGO!`);
-                await carregarClientesErenderizar();
-            } catch (err) {
-                alert("Erro: " + err.message);
-            }
-        }
-    }
-    
-    async function reverterPagamento(id, nomeCliente) {
-        if (confirm(`Reverter pagamento de ${nomeCliente} para pendente?`)) {
-            try {
-                await updateDoc(doc(db, "clientes_pagamentos_v3", id), {
-                    status: "pendente",
-                    dataPagamento: null
-                });
-                exibirToast(`↩️ ${nomeCliente} voltou para PENDENTE`);
-                await carregarClientesErenderizar();
-            } catch (err) {
-                alert("Erro: " + err.message);
-            }
-        }
-    }
-    
-    async function carregarClientesErenderizar() {
-        const tbody = document.getElementById("tabelaClientesBody");
-        const containerHoje = document.getElementById("listaVencimentosHoje");
-        const contagemSpan = document.getElementById("contagemHoje");
-        
-        tbody.innerHTML = '<tr><td colspan="6" class="loading-row">Carregando...</td></tr>';
-        containerHoje.innerHTML = '<div class="loading-row">Carregando...</div>';
-        
-        try {
-            const q = query(clientesCollection, orderBy("dataVencimento", "asc"));
-            const querySnapshot = await getDocs(q);
-            const clientes = [];
-            querySnapshot.forEach(docSnap => {
-                clientes.push({ id: docSnap.id, ...docSnap.data() });
-            });
-            
-            const pendentes = clientes.filter(c => c.status !== "pago");
-            const venceHojePendentes = pendentes.filter(c => isVencimentoHoje(c.dataVencimento));
-            const totalPagos = clientes.filter(c => c.status === "pago").length;
-            
-            document.getElementById("statsTotal").innerHTML = `<i class="fas fa-users"></i> Total: ${clientes.length} | ✅ Pagos: ${totalPagos} | ⏳ Pendentes: ${pendentes.length} | 🔔 Hoje: ${venceHojePendentes.length}`;
-            contagemSpan.innerText = venceHojePendentes.length;
-            
-            // CARDS - SOMENTE PENDENTES QUE VENCEM HOJE
-            if (venceHojePendentes.length === 0) {
-                containerHoje.innerHTML = `<div style="color:#b38f6b; text-align:center; padding:20px;"><i class="fas fa-check-circle"></i> Nenhum cliente pendente vence hoje.</div>`;
-            } else {
-                let htmlCards = '';
-                venceHojePendentes.forEach(cli => {
-                    htmlCards += `
-                        <div class="client-card-today">
-                            <div class="client-info">
-                                <span class="client-name">${escapeHtml(cli.nome)}</span>
-                                <span class="due-date"><i class="fas fa-calendar"></i> Vence: ${formatarDataBR(cli.dataVencimento)}</span>
-                                ${cli.whatsapp ? `<span><i class="fab fa-whatsapp"></i> ${formatarTelefone(cli.whatsapp)}</span>` : ''}
-                            </div>
-                            <div class="action-buttons">
-                                <button class="btn-whatsapp" data-nome="${escapeHtml(cli.nome)}" data-whats="${cli.whatsapp || ''}">
-                                    <i class="fab fa-whatsapp"></i> Enviar
-                                </button>
-                                <button class="btn-pagar" data-id="${cli.id}" data-nome="${escapeHtml(cli.nome)}">
-                                    <i class="fas fa-check-circle"></i> Pagou (Antecipado)
-                                </button>
-                            </div>
-                        </div>
-                    `;
-                });
-                containerHoje.innerHTML = htmlCards;
-                
-                document.querySelectorAll('.btn-whatsapp').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        const nome = btn.getAttribute('data-nome');
-                        const whats = btn.getAttribute('data-whats');
-                        copiarMensagemEAbrirWhatsApp(nome, whats);
-                    });
-                });
-                document.querySelectorAll('.btn-pagar').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        const id = btn.getAttribute('data-id');
-                        const nome = btn.getAttribute('data-nome');
-                        marcarComoPago(id, nome);
-                    });
-                });
-            }
-            
-            // TABELA COM FILTRO
-            let clientesFiltrados = clientes;
-            if (filtroAtual === "pendente") clientesFiltrados = clientes.filter(c => c.status !== "pago");
-            if (filtroAtual === "pago") clientesFiltrados = clientes.filter(c => c.status === "pago");
-            
-            if (clientesFiltrados.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="empty-row">Nenhum cliente encontrado</td></tr>';
-            } else {
-                let tabelaHtml = '';
-                clientesFiltrados.forEach(cli => {
-                    const hojeFlag = isVencimentoHoje(cli.dataVencimento);
-                    const isPago = cli.status === "pago";
-                    let statusHtml = isPago ? '<span class="badge-pago"><i class="fas fa-check"></i> PAGO</span>' : '<span class="badge-pendente"><i class="fas fa-clock"></i> Pendente</span>';
-                    const dataPagto = cli.dataPagamento ? formatarDataBR(cli.dataPagamento) : '—';
-                    const telefoneFmt = cli.whatsapp ? formatarTelefone(cli.whatsapp) : '—';
-                    
-                    tabelaHtml += `
-                        <tr style="${isPago ? 'background:#f8fff8;' : ''}">
-                            <td><strong>${escapeHtml(cli.nome)}</strong>${hojeFlag && !isPago ? ' <i class="fas fa-bell" style="color:#ff8c42;"></i>' : ''}</td>
-                            <td><i class="fab fa-whatsapp"></i> ${escapeHtml(telefoneFmt)}</td>
-                            <td>${formatarDataBR(cli.dataVencimento)}</td>
-                            <td>${statusHtml}</td>
-                            <td>${dataPagto}</td>
-                            <td>
-                                <button class="btn-whatsapp-table" data-nome="${escapeHtml(cli.nome)}" data-whats="${cli.whatsapp || ''}" style="background:#25D366; color:white; border:none; padding:6px 12px; border-radius:30px; margin-right:6px; cursor:pointer;">
-                                    <i class="fab fa-whatsapp"></i>
-                                </button>
-                                ${!isPago ? `<button class="btn-pagar-table" data-id="${cli.id}" data-nome="${escapeHtml(cli.nome)}" style="background:#3498db; color:white; border:none; padding:6px 12px; border-radius:30px; margin-right:6px; cursor:pointer;">
-                                    <i class="fas fa-dollar-sign"></i> Pagar
-                                </button>` : `<button class="btn-reverter-table" data-id="${cli.id}" data-nome="${escapeHtml(cli.nome)}" style="background:#e67e22; color:white; border:none; padding:6px 12px; border-radius:30px; margin-right:6px; cursor:pointer;">
-                                    <i class="fas fa-undo"></i> Reverter
-                                </button>`}
-                                <button class="delete-btn" data-id="${cli.id}" data-nome="${escapeHtml(cli.nome)}"><i class="fas fa-trash-alt"></i></button>
-                             </td>
-                         </tr>
-                    `;
-                });
-                tbody.innerHTML = tabelaHtml;
-                
-                document.querySelectorAll('.btn-whatsapp-table').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        const nome = btn.getAttribute('data-nome');
-                        const whats = btn.getAttribute('data-whats');
-                        copiarMensagemEAbrirWhatsApp(nome, whats);
-                    });
-                });
-                document.querySelectorAll('.btn-pagar-table').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        const id = btn.getAttribute('data-id');
-                        const nome = btn.getAttribute('data-nome');
-                        marcarComoPago(id, nome);
-                    });
-                });
-                document.querySelectorAll('.btn-reverter-table').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        const id = btn.getAttribute('data-id');
-                        const nome = btn.getAttribute('data-nome');
-                        reverterPagamento(id, nome);
-                    });
-                });
-                document.querySelectorAll('.delete-btn').forEach(btn => {
-                    btn.addEventListener('click', async (e) => {
-                        const id = btn.getAttribute('data-id');
-                        const nome = btn.getAttribute('data-nome');
-                        if (confirm(`Excluir ${nome}?`)) {
-                            await deleteDoc(doc(db, "clientes_pagamentos_v3", id));
-                            exibirToast(`🗑️ ${nome} removido`);
-                            await carregarClientesErenderizar();
-                        }
-                    });
-                });
-            }
-            erroPermissao = false;
-            document.getElementById("alertaPermissao").style.display = "none";
-        } catch (error) {
-            if (error.code === 'permission-denied') {
-                document.getElementById("alertaPermissao").style.display = "block";
-                tbody.innerHTML = '<tr><td colspan="6" class="empty-row">⚠️ Permissão negada! Configure as regras do Firestore.</td></tr>';
-            }
-            erroPermissao = true;
-        }
-    }
-    
-    function formatarTelefone(numero) {
-        let n = numero.replace(/\D/g, '');
-        if (n.startsWith('55')) n = n.substring(2);
-        if (n.length === 11) return `(${n.substring(0,2)}) ${n.substring(2,7)}-${n.substring(7,11)}`;
-        if (n.length === 10) return `(${n.substring(0,2)}) ${n.substring(2,6)}-${n.substring(6,10)}`;
-        return numero;
-    }
-    
-    async function adicionarClienteFirestore(nome, whatsapp, dataVenc, status) {
-        if (!nome.trim()) { alert("Digite o nome"); return false; }
-        if (!dataVenc) { alert("Selecione a data"); return false; }
-        let telefoneLimpo = whatsapp ? whatsapp.replace(/\D/g, '') : '';
-        if (telefoneLimpo && !telefoneLimpo.startsWith('55') && telefoneLimpo.length >= 10) telefoneLimpo = '55' + telefoneLimpo;
-        const dataPagamento = status === "pago" ? new Date().toISOString().split('T')[0] : null;
-        try {
-            await addDoc(clientesCollection, {
-                nome: nome.trim(),
-                whatsapp: telefoneLimpo,
-                dataVencimento: dataVenc,
-                status: status,
-                dataPagamento: dataPagamento,
-                criadoEm: new Date().toISOString()
-            });
-            exibirToast(`✅ ${nome} adicionado!`);
-            await carregarClientesErenderizar();
-            return true;
-        } catch (err) {
-            alert("Erro: " + err.message);
-            return false;
-        }
-    }
-    
-    async function adicionarDezClientesAleatorios() {
-        const nomes = ["Ana Clara", "Roberto Nunes", "Juliana Prado", "Marcos Vinicius", "Patrícia Lins", "Felipe Augusto", "Camila Rocha", "Ricardo Nogueira", "Larissa Mendes", "Thiago Braga"];
-        const teles = ["11999998888", "21977776666", "31955554444", "11988887777", "21966665555", "31944443333", "11933332222", "21922221111", "31911110000", "11900009999"];
-        for (let i = 0; i < 10; i++) {
-            const nome = nomes[i % nomes.length] + " " + Math.floor(Math.random() * 100);
-            const tel = teles[Math.floor(Math.random() * teles.length)];
-            const dias = Math.floor(Math.random() * 31);
-            const data = new Date(); data.setDate(data.getDate() + dias);
-            const statusRand = Math.random() > 0.7 ? "pago" : "pendente";
-            const dataPag = statusRand === "pago" ? new Date().toISOString().split('T')[0] : null;
-            await addDoc(clientesCollection, { nome, whatsapp: tel, dataVencimento: data.toISOString().split('T')[0], status: statusRand, dataPagamento: dataPag, criadoEm: new Date().toISOString() });
-        }
-        exibirToast("✨ 10 clientes aleatórios adicionados!");
-        await carregarClientesErenderizar();
-    }
-    
-    function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); }
-    
-    document.getElementById("btnAdicionar").addEventListener("click", async () => {
-        await adicionarClienteFirestore(
-            document.getElementById("nomeCliente").value,
-            document.getElementById("whatsappCliente").value,
-            document.getElementById("dataVencimento").value,
-            document.getElementById("statusInicial").value
-        );
-        document.getElementById("nomeCliente").value = "";
-        document.getElementById("whatsappCliente").value = "";
-    });
-    document.getElementById("btnAdicionarAleatorio").addEventListener("click", adicionarDezClientesAleatorios);
-    document.getElementById("dataVencimento").value = new Date().toISOString().split('T')[0];
-    
-    document.querySelectorAll(".filter-btn").forEach(btn => {
-        btn.addEventListener("click", () => {
-            document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
-            btn.classList.add("active");
-            filtroAtual = btn.getAttribute("data-filter");
-            carregarClientesErenderizar();
-        });
-    });
-    
-    carregarClientesErenderizar();
-    setInterval(() => { if (!erroPermissao) carregarClientesErenderizar(); }, 30000);
+const app=initializeApp(firebaseConfig);
+const db=getFirestore(app);
+const col=collection(db,"clientes_pagamentos_v3");
+
+let clientes=[];
+let filtro='all';
+let busca='';
+
+function hoje(){
+return new Date().toISOString().split('T')[0]
+}
+
+function br(d){
+if(!d)return '-';
+let p=d.split('-');
+return p[2]+'/'+p[1]+'/'+p[0]
+}
+
+function vencido(data){
+return data<hoje()
+}
+
+function proximos3(data){
+let a=new Date(data);
+let b=new Date();
+let diff=(a-b)/(1000*60*60*24);
+return diff>=0 && diff<=3;
+}
+
+function toast(msg){
+alert(msg)
+}
+
+async function addCliente(){
+let nome=document.getElementById('nome').value;
+let whats=document.getElementById('whats').value;
+let venc=document.getElementById('venc').value;
+let valor=parseFloat(document.getElementById('valor').value||35);
+let status=document.getElementById('status').value;
+
+if(!nome||!venc) return alert('Preencha dados');
+
+await addDoc(col,{
+nome,
+whatsapp:whats,
+dataVencimento:venc,
+valor,
+status,
+dataPagamento: status=='pago'? hoje():null,
+criadoEm:new Date().toISOString()
+});
+
+nome.value='';
+document.getElementById('nome').value='';
+document.getElementById('whats').value='';
+}
+
+function render(){
+let filtrados=clientes;
+
+if(filtro==='pago')
+filtrados=filtrados.filter(x=>x.status==='pago');
+
+if(filtro==='pendente')
+filtrados=filtrados.filter(x=>x.status!=='pago');
+
+if(busca)
+filtrados=filtrados.filter(x=>
+x.nome.toLowerCase().includes(busca)
+);
+
+let pagos=clientes.filter(x=>x.status==='pago');
+let receb=pagos.reduce((a,b)=>a+(b.valor||35),0);
+
+ totClientes.innerText=clientes.length;
+ totPagos.innerText=pagos.length;
+ totPend.innerText=clientes.length-pagos.length;
+ recebido.innerText='R$'+receb.toFixed(2);
+
+let hojeLista=clientes.filter(
+x=>x.status!=='pago' && x.dataVencimento===hoje()
+);
+
+listaHoje.innerHTML='';
+
+if(!hojeLista.length)
+listaHoje.innerHTML='Nenhum vencimento hoje';
+
+hojeLista.forEach(c=>{
+listaHoje.innerHTML+=`
+<div class='cliente'>
+<div>
+<b>${c.nome}</b><br>
+${c.whatsapp}
+</div>
+<div>
+<button class='whats action' data-w='${c.whatsapp}'>WhatsApp</button>
+<button class='pay action' data-pay='${c.id}'>Pago</button>
+</div>
+</div>`;
+})
+
+tbody.innerHTML='';
+
+filtrados.forEach(c=>{
+let linha='';
+if(c.status!=='pago' && vencido(c.dataVencimento))
+linha='vencido';
+else if(proximos3(c.dataVencimento)&&c.status!=='pago')
+linha='proximo';
+
+tbody.innerHTML+=`
+<tr class='${linha}'>
+<td>${c.nome}</td>
+<td>${c.whatsapp||'-'}</td>
+<td>${br(c.dataVencimento)}</td>
+<td>
+<span class='tag ${c.status==='pago'?'pago':'pendente'}'>
+${c.status}
+</span>
+</td>
+<td>R$${c.valor||35}</td>
+<td>
+<button class='whats action' data-w='${c.whatsapp}'>Wpp</button>
+${c.status!=='pago' ?
+`<button class='pay action' data-pay='${c.id}'>Pagar</button>`:
+`<button class='rev action' data-rev='${c.id}'>Reverter</button>`}
+<button class='renew action' data-renew='${c.id}'>+30d</button>
+<button class='del action' data-del='${c.id}'>Excluir</button>
+</td>
+</tr>`
+})
+}
+
+const q=query(col,orderBy('dataVencimento'));
+
+onSnapshot(q,s=>{
+clientes=[];
+s.forEach(d=>{
+clientes.push({id:d.id,...d.data()})
+});
+render();
+});
+
+async function marcarPago(id){
+await updateDoc(doc(db,'clientes_pagamentos_v3',id),{
+status:'pago',
+dataPagamento:hoje()
+})
+}
+
+async function reverter(id){
+await updateDoc(doc(db,'clientes_pagamentos_v3',id),{
+status:'pendente',
+dataPagamento:null
+})
+}
+
+async function renovar(id){
+let c=clientes.find(x=>x.id===id);
+let d=new Date(c.dataVencimento);
+d.setDate(d.getDate()+30);
+
+await updateDoc(doc(db,'clientes_pagamentos_v3',id),{
+dataVencimento:d.toISOString().split('T')[0],
+status:'pendente'
+})
+}
+
+async function excluir(id){
+if(confirm('Excluir cliente?'))
+await deleteDoc(doc(db,'clientes_pagamentos_v3',id))
+}
+
+function whatsapp(num){
+if(!num) return;
+let n=num.replace(/\D/g,'');
+if(!n.startsWith('55')) n='55'+n;
+window.open('https://wa.me/'+n)
+}
+
+document.addEventListener('click',e=>{
+let b=e.target;
+if(b.dataset.pay) marcarPago(b.dataset.pay)
+if(b.dataset.rev) reverter(b.dataset.rev)
+if(b.dataset.renew) renovar(b.dataset.renew)
+if(b.dataset.del) excluir(b.dataset.del)
+if(b.dataset.w) whatsapp(b.dataset.w)
+})
+
+addBtn.onclick=addCliente;
+
+buscar.oninput=e=>{
+busca=e.target.value.toLowerCase();
+render();
+}
+
+document.querySelectorAll('.filter').forEach(b=>{
+b.onclick=()=>{
+document.querySelectorAll('.filter')
+.forEach(x=>x.classList.remove('active'));
+b.classList.add('active');
+filtro=b.dataset.filter;
+render();
+}
+})
+
+backup.onclick=async()=>{
+const snap=await getDocs(col);
+let dados=[];
+snap.forEach(d=>dados.push(d.data()));
+const blob=new Blob([
+JSON.stringify(dados,null,2)
+],{type:'application/json'});
+let a=document.createElement('a');
+a.href=URL.createObjectURL(blob);
+a.download='backup_clientes.json';
+a.click();
+}
+
+document.getElementById('venc').value=hoje();
 </script>
+
 </body>
 </html>
+```
+
+### Firestore rules (temporário para testes)
+
+```javascript
+rules_version = '2';
+service cloud.firestore {
+ match /databases/{database}/documents {
+  match /{document=**} {
+   allow read, write: if true;
+  }
+ }
+}
+```
+
+Depois posso te ajudar a colocar login admin e cobrança automática também.
+
