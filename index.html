@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>Controle de Clientes</title>
+    <title>Controle de Clientes - Renovação</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
@@ -53,8 +53,8 @@
         .stat-card {
             background: rgba(255,255,255,0.2);
             border-radius: 20px;
-            padding: 6px 14px;
-            font-size: 0.75rem;
+            padding: 6px 12px;
+            font-size: 0.7rem;
             font-weight: 500;
         }
         
@@ -173,6 +173,12 @@
             font-weight: 600;
         }
         
+        .today-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        
         .client-card {
             background: white;
             border-radius: 16px;
@@ -184,6 +190,13 @@
             flex-wrap: wrap;
             gap: 10px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        
+        .client-card-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
         }
         
         .client-info {
@@ -225,6 +238,8 @@
         .icon-btn-wpp { background: #25D366; color: white; }
         .icon-btn-edit { background: #9c27b0; color: white; }
         .icon-btn-pay { background: #4caf50; color: white; }
+        .icon-btn-renovar { background: #2196f3; color: white; }
+        .icon-btn-reverter { background: #ff9800; color: white; }
         
         .section-header {
             display: flex;
@@ -243,6 +258,7 @@
         .filter-buttons {
             display: flex;
             gap: 8px;
+            flex-wrap: wrap;
         }
         
         .filter-btn {
@@ -305,6 +321,13 @@
             accent-color: #128c7e;
         }
         
+        .today-check {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #128c7e;
+        }
+        
         .client-details {
             flex: 1;
         }
@@ -313,6 +336,10 @@
             font-weight: 700;
             font-size: 0.95rem;
             color: #1a2a3a;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 6px;
         }
         
         .client-whats {
@@ -335,37 +362,51 @@
             color: #c62828;
         }
         
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+        
+        .status-pendente {
+            background: #e67e22;
+            color: white;
+        }
+        
+        .status-renovado {
+            background: #2196f3;
+            color: white;
+        }
+        
         .status-pago {
             background: #2ecc71;
             color: white;
-            padding: 2px 8px;
-            border-radius: 15px;
-            font-size: 0.7rem;
-            font-weight: 600;
-            display: inline-block;
         }
         
         .status-hoje {
-            background: #2196f3;
+            background: #9c27b0;
             color: white;
-            font-size: 0.6rem;
-            margin-left: 6px;
-            padding: 2px 6px;
+            font-size: 0.65rem;
+            padding: 2px 8px;
             border-radius: 12px;
         }
         
         .status-vencido {
             background: #f44336;
             color: white;
-            font-size: 0.6rem;
-            margin-left: 6px;
-            padding: 2px 6px;
+            font-size: 0.65rem;
+            padding: 2px 8px;
             border-radius: 12px;
         }
         
         .action-buttons {
             display: flex;
             gap: 6px;
+            flex-wrap: wrap;
         }
         
         .small-btn {
@@ -376,7 +417,10 @@
             border-radius: 25px;
             cursor: pointer;
             font-size: 0.85rem;
+            transition: 0.2s;
         }
+        
+        .small-btn:active { transform: scale(0.95); }
         
         .mass-actions {
             background: #e3f2fd;
@@ -443,6 +487,9 @@
             .client-row { flex-direction: column; align-items: flex-start; }
             .action-buttons { align-self: flex-end; }
             .client-main { width: 100%; }
+            .filter-buttons { justify-content: center; }
+            .client-card { flex-direction: column; align-items: stretch; }
+            .client-card-left { width: 100%; }
         }
     </style>
 </head>
@@ -453,6 +500,7 @@
         <div class="stats">
             <span class="stat-card"><i class="fas fa-users"></i> <span id="totalCount">0</span></span>
             <span class="stat-card"><i class="fas fa-clock"></i> Pendentes: <span id="pendentesCount">0</span></span>
+            <span class="stat-card"><i class="fas fa-sync-alt"></i> Renovados: <span id="renovadosCount">0</span></span>
             <span class="stat-card"><i class="fas fa-check-circle"></i> Pagos: <span id="pagosCount">0</span></span>
             <span class="stat-card"><i class="fas fa-exclamation-triangle"></i> Vencidos: <span id="vencidosCount">0</span></span>
         </div>
@@ -469,8 +517,9 @@
             <input type="tel" id="whatsapp" class="form-input" placeholder="WhatsApp (ex: 22992122046)">
             <input type="number" id="diaVencimento" class="form-input" placeholder="Dia de vencimento (1-31)" min="1" max="31">
             <select id="status" class="form-input">
-                <option value="pendente">Pendente</option>
-                <option value="pago">Pago</option>
+                <option value="pendente">📋 Pendente</option>
+                <option value="renovado">🔄 Renovado</option>
+                <option value="pago">✅ Pago</option>
             </select>
             <button id="btnAdicionar" class="btn btn-primary">➕ Adicionar</button>
         </div>
@@ -481,6 +530,11 @@
             <h2><i class="fas fa-bell"></i> Vencem Hoje</h2>
             <span class="today-badge" id="hojeCount">0</span>
         </div>
+        <div class="today-actions">
+            <button id="btnSelecionarTodosHoje" class="mass-btn" style="background:#1565c0;"><i class="fas fa-check-double"></i> Selecionar Todos</button>
+            <button id="btnEnviarSelecionadosHoje" class="mass-btn mass-btn-wpp"><i class="fab fa-whatsapp"></i> Enviar Selecionados</button>
+            <button id="btnPagarSelecionadosHoje" class="mass-btn" style="background:#4caf50;"><i class="fas fa-check"></i> Pagar Selecionados</button>
+        </div>
         <div id="hojeList"></div>
     </div>
 
@@ -489,6 +543,7 @@
         <button id="btnSelecionarTodos" class="mass-btn"><i class="fas fa-check-double"></i> Todos</button>
         <button id="btnDesselecionarTodos" class="mass-btn"><i class="fas fa-times"></i> Limpar</button>
         <button id="btnEnviarMassa" class="mass-btn mass-btn-wpp"><i class="fab fa-whatsapp"></i> Enviar</button>
+        <button id="btnPagarMassa" class="mass-btn" style="background:#4caf50;"><i class="fas fa-check"></i> Pagar</button>
         <span id="selectedCount" class="selected-count">0</span>
     </div>
 
@@ -498,6 +553,7 @@
             <div class="filter-buttons">
                 <button class="filter-btn active" data-filter="all">Todos</button>
                 <button class="filter-btn" data-filter="pendente">Pendentes</button>
+                <button class="filter-btn" data-filter="renovado">Renovados</button>
                 <button class="filter-btn" data-filter="pago">Pagos</button>
             </div>
         </div>
@@ -525,6 +581,7 @@
     
     let clientes = [];
     let selecionados = new Set();
+    let selecionadosHoje = new Set();
     let filtroAtual = "all";
     let termoBusca = "";
     let hoje = new Date().getDate();
@@ -551,45 +608,53 @@
         return hoje - parseInt(dia);
     }
     
-    // ORDEM: decrescente - do dia 26, 25, 24... até 1, depois 28, 29, 30, 31, 1 (próximo mês)
     function ordenarClientes(clientesList) {
         const pagos = clientesList.filter(c => c.status === "pago");
-        const pendentes = clientesList.filter(c => c.status !== "pago");
+        const naoPagos = clientesList.filter(c => c.status !== "pago");
         
-        pendentes.sort((a, b) => {
+        naoPagos.sort((a, b) => {
             const diaA = a.diaVencimento;
             const diaB = b.diaVencimento;
             const aVencido = isVencido(diaA);
             const bVencido = isVencido(diaB);
             
-            // Se ambos são vencidos (dias menores que hoje): ordem decrescente (do maior para o menor)
-            // Ex: hoje 27 → 26, 25, 24, 23...
             if (aVencido && bVencido) {
                 return b.diaVencimento - a.diaVencimento;
             }
-            
-            // Se apenas A é vencido: A vem primeiro
             if (aVencido && !bVencido) return -1;
-            
-            // Se apenas B é vencido: B vem primeiro
             if (!aVencido && bVencido) return 1;
-            
-            // Ambos NÃO são vencidos (dias maiores ou iguais a hoje)
-            // Ordem crescente: do menor para o maior (28, 29, 30, 31, 1 do prox mês)
             return diaA - diaB;
         });
         
         pagos.sort((a, b) => a.diaVencimento - b.diaVencimento);
+        return [...naoPagos, ...pagos];
+    }
+    
+    function getStatusBadge(status) {
+        if (status === "pendente") return '<span class="status-badge status-pendente"><i class="fas fa-clock"></i> Pendente</span>';
+        if (status === "renovado") return '<span class="status-badge status-renovado"><i class="fas fa-sync-alt"></i> Renovado</span>';
+        if (status === "pago") return '<span class="status-badge status-pago"><i class="fas fa-check-circle"></i> Pago</span>';
+        return '';
+    }
+    
+    function gerarMensagem(nome, status) {
+        let mensagemBase = `Bom dia! Tudo bem?\n\n`;
         
-        return [...pendentes, ...pagos];
+        if (status === "renovado") {
+            mensagemBase += `✅ Sua renovação já está confirmada!\n💰 Aguardando o pagamento.\n\n`;
+        } else if (status === "pendente") {
+            mensagemBase += `📅 Sua assinatura vence em breve!\nGostaria de renovar?\n\n`;
+        } else {
+            mensagemBase += `Gostaria de renovar?\n\n`;
+        }
+        
+        mensagemBase += `chave PIX para facilitar:\n👇👇\n⭕ Banco C6\nCPF: 12794132717\nJairo Britto Santos \n\nQualquer dúvida, estou à disposição!`;
+        
+        return mensagemBase;
     }
     
-    function gerarMensagem(nome) {
-        return `Bom dia! Tudo bem?\nGostaria de renovar?\n\nchave PIX para facilitar:\n👇👇\n⭕ Banco C6\nCPF: 12794132717\nJairo Britto Santos \n\nQualquer dúvida, estou à disposição!`;
-    }
-    
-    async function enviarWhatsApp(nome, telefone) {
-        const msg = gerarMensagem(nome);
+    async function enviarWhatsApp(nome, telefone, status) {
+        const msg = gerarMensagem(nome, status);
         await navigator.clipboard.writeText(msg);
         exibirToast(`📋 Mensagem copiada!`);
         if (telefone && telefone.trim()) {
@@ -599,19 +664,27 @@
         }
     }
     
-    async function marcarPago(id, nome, dia) {
-        if (confirm(`Confirmar pagamento de "${nome}"?`)) {
-            const hojeData = new Date().toISOString().split('T')[0];
-            await updateDoc(doc(db, NOME_COLECAO, id), { status: "pago", dataPagamento: hojeData });
-            exibirToast(`✅ ${nome} pago!`);
+    async function marcarRenovado(id, nome) {
+        if (confirm(`Marcar "${nome}" como RENOVADO?`)) {
+            await updateDoc(doc(db, NOME_COLECAO, id), { status: "renovado" });
+            exibirToast(`🔄 ${nome} marcado como RENOVADO!`);
             await carregarClientes();
         }
     }
     
-    async function reverterPagamento(id, nome) {
-        if (confirm(`Reverter pagamento de "${nome}"?`)) {
+    async function marcarPago(id, nome) {
+        if (confirm(`Confirmar PAGAMENTO de "${nome}"?`)) {
+            const hojeData = new Date().toISOString().split('T')[0];
+            await updateDoc(doc(db, NOME_COLECAO, id), { status: "pago", dataPagamento: hojeData });
+            exibirToast(`✅ ${nome} marcado como PAGO!`);
+            await carregarClientes();
+        }
+    }
+    
+    async function reverterParaPendente(id, nome) {
+        if (confirm(`Reverter "${nome}" para PENDENTE?`)) {
             await updateDoc(doc(db, NOME_COLECAO, id), { status: "pendente", dataPagamento: null });
-            exibirToast(`↩️ ${nome} pendente`);
+            exibirToast(`📋 ${nome} voltou para PENDENTE`);
             await carregarClientes();
         }
     }
@@ -652,6 +725,55 @@
         return n;
     }
     
+    function toggleSelecionadoHoje(id, checked) {
+        if (checked) selecionadosHoje.add(id);
+        else selecionadosHoje.delete(id);
+    }
+    
+    function selecionarTodosHoje() {
+        const clientesHoje = clientes.filter(c => c.status !== "pago" && isVenceHoje(c.diaVencimento));
+        clientesHoje.forEach(c => selecionadosHoje.add(c.id));
+        renderizarVenceHoje();
+        exibirToast(`✅ ${selecionadosHoje.size} clientes selecionados!`);
+    }
+    
+    async function enviarSelecionadosHoje() {
+        const clientesHoje = clientes.filter(c => c.status !== "pago" && isVenceHoje(c.diaVencimento));
+        const selecionadosArray = clientesHoje.filter(c => selecionadosHoje.has(c.id));
+        
+        if (selecionadosArray.length === 0) {
+            exibirToast("Selecione pelo menos um cliente!", "#ff9800");
+            return;
+        }
+        
+        exibirToast(`📱 Enviando para ${selecionadosArray.length} cliente(s)...`);
+        for (const c of selecionadosArray) {
+            await enviarWhatsApp(c.nome, c.whatsapp, c.status);
+            await new Promise(r => setTimeout(r, 1200));
+        }
+        exibirToast(`✅ ${selecionadosArray.length} mensagens enviadas!`);
+    }
+    
+    async function pagarSelecionadosHoje() {
+        const clientesHoje = clientes.filter(c => c.status !== "pago" && isVenceHoje(c.diaVencimento));
+        const selecionadosArray = clientesHoje.filter(c => selecionadosHoje.has(c.id));
+        
+        if (selecionadosArray.length === 0) {
+            exibirToast("Selecione pelo menos um cliente!", "#ff9800");
+            return;
+        }
+        
+        if (confirm(`Marcar ${selecionadosArray.length} cliente(s) como PAGO?`)) {
+            const hojeData = new Date().toISOString().split('T')[0];
+            for (const c of selecionadosArray) {
+                await updateDoc(doc(db, NOME_COLECAO, c.id), { status: "pago", dataPagamento: hojeData });
+            }
+            selecionadosHoje.clear();
+            exibirToast(`✅ ${selecionadosArray.length} cliente(s) marcados como PAGO!`);
+            await carregarClientes();
+        }
+    }
+    
     function renderizarVenceHoje() {
         const clientesHoje = clientes.filter(c => c.status !== "pago" && isVenceHoje(c.diaVencimento));
         const container = document.getElementById("hojeList");
@@ -662,25 +784,38 @@
             return;
         }
         
-        container.innerHTML = clientesHoje.map(c => `
-            <div class="client-card">
-                <div class="client-info">
-                    <div class="client-name">${escapeHtml(c.nome)}</div>
-                    <div class="client-day">Dia ${c.diaVencimento}</div>
+        container.innerHTML = clientesHoje.map(c => {
+            const isSelected = selecionadosHoje.has(c.id);
+            return `
+                <div class="client-card" style="${isSelected ? 'background:#e3f2fd;' : ''}">
+                    <div class="client-card-left">
+                        <input type="checkbox" class="today-check" data-id="${c.id}" ${isSelected ? 'checked' : ''} onchange="toggleSelecionadoHoje('${c.id}', this.checked)">
+                        <div class="client-info">
+                            <div class="client-name">${escapeHtml(c.nome)}</div>
+                            <div class="client-day">Dia ${c.diaVencimento}</div>
+                        </div>
+                    </div>
+                    <div class="client-actions">
+                        <button class="icon-btn icon-btn-edit" onclick='editarWhatsApp("${c.id}", "${escapeHtml(c.nome)}", "${c.whatsapp || ""}")' title="Editar WhatsApp"><i class="fab fa-whatsapp"></i></button>
+                        <button class="icon-btn icon-btn-wpp" onclick='enviarWhatsApp("${escapeHtml(c.nome)}", "${c.whatsapp || ""}", "${c.status}")' title="Enviar WhatsApp"><i class="fab fa-whatsapp"></i> Enviar</button>
+                        ${c.status === "pendente" ? 
+                            `<button class="icon-btn icon-btn-renovar" onclick='marcarRenovado("${c.id}", "${escapeHtml(c.nome)}")' title="Marcar Renovado"><i class="fas fa-sync-alt"></i></button>
+                             <button class="icon-btn icon-btn-pay" onclick='marcarPago("${c.id}", "${escapeHtml(c.nome)}")' title="Marcar Pago"><i class="fas fa-check"></i></button>` : 
+                            c.status === "renovado" ?
+                            `<button class="icon-btn icon-btn-pay" onclick='marcarPago("${c.id}", "${escapeHtml(c.nome)}")' title="Marcar Pago"><i class="fas fa-check"></i></button>` :
+                            `<button class="icon-btn icon-btn-reverter" onclick='reverterParaPendente("${c.id}", "${escapeHtml(c.nome)}")' title="Reverter"><i class="fas fa-undo"></i></button>`
+                        }
+                    </div>
                 </div>
-                <div class="client-actions">
-                    <button class="icon-btn icon-btn-edit" onclick='editarWhatsApp("${c.id}", "${escapeHtml(c.nome)}", "${c.whatsapp || ""}")'><i class="fab fa-whatsapp"></i></button>
-                    <button class="icon-btn icon-btn-wpp" onclick='enviarWhatsApp("${escapeHtml(c.nome)}", "${c.whatsapp || ""}")'><i class="fab fa-whatsapp"></i> Enviar</button>
-                    <button class="icon-btn icon-btn-pay" onclick='marcarPago("${c.id}", "${escapeHtml(c.nome)}", ${c.diaVencimento})'><i class="fas fa-check"></i> Pagar</button>
-                </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
     }
     
     function renderizarLista() {
         let filtrados = [...clientes];
         
-        if (filtroAtual === "pendente") filtrados = filtrados.filter(c => c.status !== "pago");
+        if (filtroAtual === "pendente") filtrados = filtrados.filter(c => c.status === "pendente");
+        if (filtroAtual === "renovado") filtrados = filtrados.filter(c => c.status === "renovado");
         if (filtroAtual === "pago") filtrados = filtrados.filter(c => c.status === "pago");
         if (termoBusca) filtrados = filtrados.filter(c => c.nome.toLowerCase().includes(termoBusca));
         
@@ -702,16 +837,6 @@
             const vencido = isVencido(c.diaVencimento) && c.status !== "pago";
             const diasAtraso = calcularDiasAtraso(c.diaVencimento);
             
-            let statusExtra = "";
-            let diaClass = "";
-            
-            if (vencido) {
-                statusExtra = `<span class="status-vencido">⚠️ Vencido há ${diasAtraso} dia${diasAtraso !== 1 ? 's' : ''}</span>`;
-                diaClass = "vencido";
-            } else if (venceHoje) {
-                statusExtra = `<span class="status-hoje">🔔 Vence hoje!</span>`;
-            }
-            
             return `
                 <div class="client-item ${isSelected ? 'selected' : ''} ${vencido ? 'vencido' : ''}">
                     <div class="client-row">
@@ -720,24 +845,30 @@
                             <div class="client-details">
                                 <div class="client-title">
                                     ${escapeHtml(c.nome)}
-                                    ${statusExtra}
-                                    ${c.status === "pago" ? '<span class="status-pago">✅ Pago</span>' : ''}
+                                    ${getStatusBadge(c.status)}
+                                    ${vencido ? '<span class="status-vencido"><i class="fas fa-exclamation-triangle"></i> Vencido</span>' : ''}
+                                    ${venceHoje ? '<span class="status-hoje"><i class="fas fa-bell"></i> Vence hoje!</span>' : ''}
                                 </div>
                                 <div class="client-whats"><i class="fab fa-whatsapp"></i> ${c.whatsapp ? formatarTelefone(c.whatsapp) : '—'}</div>
-                                <div class="client-dia ${diaClass}">
-                                    📅 Vence dia ${c.diaVencimento}
+                                <div class="client-dia ${vencido ? 'vencido' : ''}">
+                                    <i class="fas fa-calendar-alt"></i> Vence dia ${c.diaVencimento}
                                     ${vencido ? ` (${diasAtraso} dia${diasAtraso !== 1 ? 's' : ''} atrasado)` : ''}
                                 </div>
                             </div>
                         </div>
                         <div class="action-buttons">
-                            <button class="small-btn icon-btn-wpp" onclick='enviarWhatsApp("${escapeHtml(c.nome)}", "${c.whatsapp || ""}")' title="WhatsApp"><i class="fab fa-whatsapp"></i></button>
-                            <button class="small-btn icon-btn-edit" onclick='editarWhatsApp("${c.id}", "${escapeHtml(c.nome)}", "${c.whatsapp || ""}")' title="Editar WhatsApp"><i class="fab fa-whatsapp"></i> ✏️</button>
-                            ${c.status !== "pago" ? 
-                                `<button class="small-btn icon-btn-pay" onclick='marcarPago("${c.id}", "${escapeHtml(c.nome)}", ${c.diaVencimento})' title="Marcar Pago">💰</button>` :
-                                `<button class="small-btn" style="background:#ff9800; color:white;" onclick='reverterPagamento("${c.id}", "${escapeHtml(c.nome)}")' title="Reverter">↩️</button>`
+                            <button class="small-btn icon-btn-wpp" onclick='enviarWhatsApp("${escapeHtml(c.nome)}", "${c.whatsapp || ""}", "${c.status}")' title="Enviar WhatsApp"><i class="fab fa-whatsapp"></i></button>
+                            <button class="small-btn icon-btn-edit" onclick='editarWhatsApp("${c.id}", "${escapeHtml(c.nome)}", "${c.whatsapp || ""}")' title="Editar WhatsApp"><i class="fas fa-edit"></i></button>
+                            
+                            ${c.status === "pendente" ? 
+                                `<button class="small-btn" style="background:#2196f3; color:white;" onclick='marcarRenovado("${c.id}", "${escapeHtml(c.nome)}")' title="Marcar Renovado"><i class="fas fa-sync-alt"></i> Renovar</button>
+                                 <button class="small-btn icon-btn-pay" onclick='marcarPago("${c.id}", "${escapeHtml(c.nome)}")' title="Marcar Pago"><i class="fas fa-check"></i> Pagar</button>` : 
+                                c.status === "renovado" ?
+                                `<button class="small-btn icon-btn-pay" onclick='marcarPago("${c.id}", "${escapeHtml(c.nome)}")' title="Marcar Pago"><i class="fas fa-check"></i> Pagar</button>` :
+                                `<button class="small-btn" style="background:#ff9800; color:white;" onclick='reverterParaPendente("${c.id}", "${escapeHtml(c.nome)}")' title="Reverter para Pendente"><i class="fas fa-undo"></i> Reverter</button>`
                             }
-                            <button class="small-btn" style="background:#607d8b; color:white;" onclick='editarDia("${c.id}", "${escapeHtml(c.nome)}", ${c.diaVencimento})' title="Editar dia">📅</button>
+                            
+                            <button class="small-btn" style="background:#607d8b; color:white;" onclick='editarDia("${c.id}", "${escapeHtml(c.nome)}", ${c.diaVencimento})' title="Editar dia"><i class="fas fa-calendar-alt"></i></button>
                             <button class="small-btn" style="background:#f44336; color:white;" onclick='excluirCliente("${c.id}", "${escapeHtml(c.nome)}")' title="Excluir"><i class="fas fa-trash-alt"></i></button>
                         </div>
                     </div>
@@ -749,12 +880,14 @@
     }
     
     function atualizarStats() {
-        const pendentes = clientes.filter(c => c.status !== "pago");
+        const pendentes = clientes.filter(c => c.status === "pendente");
+        const renovados = clientes.filter(c => c.status === "renovado");
         const pagos = clientes.filter(c => c.status === "pago");
         const vencidos = clientes.filter(c => c.status !== "pago" && isVencido(c.diaVencimento));
         
         document.getElementById("totalCount").innerText = clientes.length;
         document.getElementById("pendentesCount").innerText = pendentes.length;
+        document.getElementById("renovadosCount").innerText = renovados.length;
         document.getElementById("pagosCount").innerText = pagos.length;
         document.getElementById("vencidosCount").innerText = vencidos.length;
     }
@@ -802,15 +935,18 @@
         await carregarClientes();
     }
     
+    // Funções globais
     window.toggleSelecionado = (id, checked) => {
         if (checked) selecionados.add(id);
         else selecionados.delete(id);
         renderizarLista();
     };
     
+    window.toggleSelecionadoHoje = toggleSelecionadoHoje;
     window.enviarWhatsApp = enviarWhatsApp;
+    window.marcarRenovado = marcarRenovado;
     window.marcarPago = marcarPago;
-    window.reverterPagamento = reverterPagamento;
+    window.reverterParaPendente = reverterParaPendente;
     window.excluirCliente = excluirCliente;
     window.editarWhatsApp = editarWhatsApp;
     window.editarDia = editarDia;
@@ -822,12 +958,14 @@
     
     function selecionarTodos() {
         let filtrados = [...clientes];
-        if (filtroAtual === "pendente") filtrados = filtrados.filter(c => c.status !== "pago");
+        if (filtroAtual === "pendente") filtrados = filtrados.filter(c => c.status === "pendente");
+        if (filtroAtual === "renovado") filtrados = filtrados.filter(c => c.status === "renovado");
         if (filtroAtual === "pago") filtrados = filtrados.filter(c => c.status === "pago");
         if (termoBusca) filtrados = filtrados.filter(c => c.nome.toLowerCase().includes(termoBusca));
         
         filtrados.forEach(c => selecionados.add(c.id));
         renderizarLista();
+        exibirToast(`✅ ${selecionados.size} clientes selecionados!`);
     }
     
     function desselecionarTodos() {
@@ -843,20 +981,40 @@
         }
         
         exibirToast(`📱 Enviando para ${selecionadosArray.length} cliente(s)...`);
-        
-        for (let i = 0; i < selecionadosArray.length; i++) {
-            const c = selecionadosArray[i];
-            await enviarWhatsApp(c.nome, c.whatsapp);
+        for (const c of selecionadosArray) {
+            await enviarWhatsApp(c.nome, c.whatsapp, c.status);
             await new Promise(r => setTimeout(r, 1200));
         }
-        
         exibirToast(`✅ ${selecionadosArray.length} mensagens enviadas!`);
     }
     
+    async function pagarSelecionados() {
+        const selecionadosArray = clientes.filter(c => selecionados.has(c.id) && c.status !== "pago");
+        if (selecionadosArray.length === 0) {
+            exibirToast("Selecione clientes pendentes ou renovados!", "#ff9800");
+            return;
+        }
+        
+        if (confirm(`Marcar ${selecionadosArray.length} cliente(s) como PAGO?`)) {
+            const hojeData = new Date().toISOString().split('T')[0];
+            for (const c of selecionadosArray) {
+                await updateDoc(doc(db, NOME_COLECAO, c.id), { status: "pago", dataPagamento: hojeData });
+            }
+            selecionados.clear();
+            exibirToast(`✅ ${selecionadosArray.length} cliente(s) marcados como PAGO!`);
+            await carregarClientes();
+        }
+    }
+    
+    // Eventos
     document.getElementById("btnAdicionar").addEventListener("click", adicionarCliente);
     document.getElementById("btnSelecionarTodos").addEventListener("click", selecionarTodos);
     document.getElementById("btnDesselecionarTodos").addEventListener("click", desselecionarTodos);
     document.getElementById("btnEnviarMassa").addEventListener("click", enviarSelecionados);
+    document.getElementById("btnPagarMassa").addEventListener("click", pagarSelecionados);
+    document.getElementById("btnSelecionarTodosHoje").addEventListener("click", selecionarTodosHoje);
+    document.getElementById("btnEnviarSelecionadosHoje").addEventListener("click", enviarSelecionadosHoje);
+    document.getElementById("btnPagarSelecionadosHoje").addEventListener("click", pagarSelecionadosHoje);
     
     document.querySelectorAll(".filter-btn").forEach(btn => {
         btn.addEventListener("click", () => {
