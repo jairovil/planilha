@@ -53,11 +53,12 @@
         .stat-card {
             background: rgba(255,255,255,0.2);
             border-radius: 20px;
-            padding: 6px 12px;
-            font-size: 0.7rem;
+            padding: 6px 10px;
+            font-size: 0.65rem;
             font-weight: 500;
             cursor: pointer;
             transition: 0.2s;
+            text-align: center;
         }
         
         .stat-card:active { transform: scale(0.95); }
@@ -237,7 +238,7 @@
             height: 40px;
             border-radius: 30px;
             cursor: pointer;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             transition: 0.2s;
             font-weight: 600;
         }
@@ -246,7 +247,8 @@
         .icon-btn-edit { background: #9c27b0; color: white; }
         .icon-btn-pay { background: #4caf50; color: white; }
         .icon-btn-renovar { background: #2196f3; color: white; }
-        .icon-btn-reverter { background: #ff9800; color: white; }
+        .icon-btn-antecipado { background: #ff9800; color: white; }
+        .icon-btn-reverter { background: #f44336; color: white; }
         .icon-btn:active { transform: scale(0.95); }
         
         .section-header {
@@ -274,7 +276,7 @@
             border: none;
             padding: 6px 14px;
             border-radius: 30px;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             font-weight: 500;
             cursor: pointer;
         }
@@ -376,7 +378,7 @@
             gap: 4px;
             padding: 3px 10px;
             border-radius: 20px;
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             font-weight: 600;
         }
         
@@ -390,6 +392,11 @@
             color: white;
         }
         
+        .status-antecipado {
+            background: #ff9800;
+            color: white;
+        }
+        
         .status-pago {
             background: #2ecc71;
             color: white;
@@ -398,7 +405,7 @@
         .status-hoje {
             background: #9c27b0;
             color: white;
-            font-size: 0.65rem;
+            font-size: 0.6rem;
             padding: 2px 8px;
             border-radius: 12px;
         }
@@ -406,7 +413,7 @@
         .status-vencido {
             background: #f44336;
             color: white;
-            font-size: 0.65rem;
+            font-size: 0.6rem;
             padding: 2px 8px;
             border-radius: 12px;
         }
@@ -423,7 +430,7 @@
             padding: 6px 12px;
             border-radius: 20px;
             cursor: pointer;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             transition: 0.2s;
             font-weight: 600;
         }
@@ -446,9 +453,9 @@
             background: #1565c0;
             color: white;
             border: none;
-            padding: 8px 14px;
+            padding: 8px 12px;
             border-radius: 25px;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             font-weight: 500;
             cursor: pointer;
         }
@@ -458,7 +465,7 @@
         }
         
         .selected-count {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             font-weight: 500;
             color: #1565c0;
         }
@@ -491,7 +498,7 @@
         }
         
         .help-text {
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             color: #666;
             text-align: center;
             margin-top: 8px;
@@ -505,7 +512,8 @@
             .filter-buttons { justify-content: center; }
             .client-card { flex-direction: column; align-items: stretch; }
             .client-card-left { width: 100%; }
-            .icon-btn { width: 36px; height: 36px; font-size: 0.75rem; }
+            .icon-btn { width: 36px; height: 36px; font-size: 0.7rem; }
+            .stat-card { font-size: 0.55rem; padding: 4px 8px; }
         }
     </style>
 </head>
@@ -517,8 +525,8 @@
             <span class="stat-card" onclick="filtrarPorStatus('all')"><i class="fas fa-users"></i> <span id="totalCount">0</span></span>
             <span class="stat-card" onclick="filtrarPorStatus('pendente')"><i class="fas fa-clock"></i> Pendentes: <span id="pendentesCount">0</span></span>
             <span class="stat-card" onclick="filtrarPorStatus('renovado')"><i class="fas fa-sync-alt"></i> Renovados: <span id="renovadosCount">0</span></span>
+            <span class="stat-card" onclick="filtrarPorStatus('antecipado')"><i class="fas fa-money-bill-wave"></i> Antecipado: <span id="antecipadoCount">0</span></span>
             <span class="stat-card" onclick="filtrarPorStatus('pago')"><i class="fas fa-check-circle"></i> Pagos: <span id="pagosCount">0</span></span>
-            <span class="stat-card" onclick="filtrarPorStatus('vencido')"><i class="fas fa-exclamation-triangle"></i> Vencidos: <span id="vencidosCount">0</span></span>
         </div>
         <div class="search-box">
             <input type="text" id="searchInput" placeholder="🔍 Buscar cliente...">
@@ -534,13 +542,14 @@
             <input type="number" id="diaVencimento" class="form-input" placeholder="Dia de vencimento (1-31)" min="1" max="31">
             <select id="status" class="form-input">
                 <option value="pendente">📋 Pendente</option>
-                <option value="renovado">🔄 Renovado</option>
-                <option value="pago">✅ Pago</option>
+                <option value="renovado">🔄 Renovado (aguardando pagamento)</option>
+                <option value="antecipado">💰 Pago Antecipado</option>
+                <option value="pago">✅ Pago Finalizado</option>
             </select>
             <button id="btnAdicionar" class="btn btn-primary">➕ Adicionar</button>
         </div>
         <div class="help-text">
-            <i class="fas fa-info-circle"></i> Fluxo: Pendente → Renovado → Pago
+            <i class="fas fa-info-circle"></i> 🔄 Renovado = continua na lista até pagar | ✅ Pago = sai da lista
         </div>
     </div>
 
@@ -552,6 +561,7 @@
         <div class="today-actions">
             <button id="btnSelecionarTodosHoje" class="mass-btn" style="background:#1565c0;"><i class="fas fa-check-double"></i> Selecionar</button>
             <button id="btnRenovarSelecionadosHoje" class="mass-btn" style="background:#2196f3;"><i class="fas fa-sync-alt"></i> Renovar</button>
+            <button id="btnAntecipadoSelecionadosHoje" class="mass-btn" style="background:#ff9800;"><i class="fas fa-money-bill-wave"></i> Antecipado</button>
             <button id="btnPagarSelecionadosHoje" class="mass-btn" style="background:#4caf50;"><i class="fas fa-check"></i> Pagar</button>
             <button id="btnEnviarSelecionadosHoje" class="mass-btn mass-btn-wpp"><i class="fab fa-whatsapp"></i> Enviar</button>
         </div>
@@ -563,6 +573,7 @@
         <button id="btnSelecionarTodos" class="mass-btn"><i class="fas fa-check-double"></i> Todos</button>
         <button id="btnDesselecionarTodos" class="mass-btn"><i class="fas fa-times"></i> Limpar</button>
         <button id="btnRenovarMassa" class="mass-btn" style="background:#2196f3;"><i class="fas fa-sync-alt"></i> Renovar</button>
+        <button id="btnAntecipadoMassa" class="mass-btn" style="background:#ff9800;"><i class="fas fa-money-bill-wave"></i> Antecipado</button>
         <button id="btnPagarMassa" class="mass-btn" style="background:#4caf50;"><i class="fas fa-check"></i> Pagar</button>
         <button id="btnEnviarMassa" class="mass-btn mass-btn-wpp"><i class="fab fa-whatsapp"></i> Enviar</button>
         <span id="selectedCount" class="selected-count">0</span>
@@ -575,6 +586,7 @@
                 <button class="filter-btn active" data-filter="all">Todos</button>
                 <button class="filter-btn" data-filter="pendente">Pendentes</button>
                 <button class="filter-btn" data-filter="renovado">Renovados</button>
+                <button class="filter-btn" data-filter="antecipado">Antecipado</button>
                 <button class="filter-btn" data-filter="pago">Pagos</button>
             </div>
         </div>
@@ -624,10 +636,19 @@
         return parseInt(dia) < hoje;
     }
     
+    // FUNÇÃO IMPORTANTE: Define quais status aparecem na lista principal (NÃO PAGOS)
+    // Apenas PAGO sai da lista padrão
+    function deveAparecerNaLista(status) {
+        // Só NÃO aparece se for "pago" (finalizado)
+        // Renovado e Antecipado continuam aparecendo
+        return status !== "pago";
+    }
+    
     function getStatusBadge(status) {
         if (status === "pendente") return '<span class="status-badge status-pendente"><i class="fas fa-clock"></i> Pendente</span>';
-        if (status === "renovado") return '<span class="status-badge status-renovado"><i class="fas fa-sync-alt"></i> Renovado</span>';
-        if (status === "pago") return '<span class="status-badge status-pago"><i class="fas fa-check-circle"></i> Pago</span>';
+        if (status === "renovado") return '<span class="status-badge status-renovado"><i class="fas fa-sync-alt"></i> Renovado (aguardando pagamento)</span>';
+        if (status === "antecipado") return '<span class="status-badge status-antecipado"><i class="fas fa-money-bill-wave"></i> Pago Antecipado</span>';
+        if (status === "pago") return '<span class="status-badge status-pago"><i class="fas fa-check-circle"></i> Pago Finalizado</span>';
         return '';
     }
     
@@ -637,7 +658,9 @@
         if (status === "renovado") {
             mensagemBase += `✅ Sua renovação já está confirmada!\n💰 Aguardando o pagamento.\n\n`;
         } else if (status === "pendente") {
-            mensagemBase += `📅 Sua assinatura vence em breve!\nGostaria de renovar?\n\n`;
+            mensagemBase += `📅 Sua assinatura venceu/vence em breve!\nGostaria de regularizar?\n\n`;
+        } else if (status === "antecipado") {
+            mensagemBase += `✅ Recebemos seu pagamento antecipado!\n🔄 Sua renovação será ativada no vencimento.\n\n`;
         } else {
             mensagemBase += `Gostaria de renovar?\n\n`;
         }
@@ -658,11 +681,19 @@
         }
     }
     
-    // Fluxo: Pendente → Renovado → Pago
     async function marcarRenovado(id, nome) {
-        if (confirm(`Marcar "${nome}" como RENOVADO? (Cliente confirmou que vai pagar)`)) {
+        if (confirm(`Marcar "${nome}" como RENOVADO? (Cliente vai pagar depois)`)) {
             await updateDoc(doc(db, NOME_COLECAO, id), { status: "renovado" });
-            exibirToast(`🔄 ${nome} marcado como RENOVADO! Aguardando pagamento.`);
+            exibirToast(`🔄 ${nome} renovado! Aguardando pagamento. Continua na lista.`);
+            await carregarClientes();
+        }
+    }
+    
+    async function marcarAntecipado(id, nome) {
+        if (confirm(`Marcar "${nome}" como PAGO ANTECIPADO? (Cliente pagou antes do vencimento)`)) {
+            const hojeData = new Date().toISOString().split('T')[0];
+            await updateDoc(doc(db, NOME_COLECAO, id), { status: "antecipado", dataPagamento: hojeData });
+            exibirToast(`💰 ${nome} pagou antecipado! Sai da lista (pagamento confirmado).`);
             await carregarClientes();
         }
     }
@@ -671,15 +702,15 @@
         if (confirm(`Confirmar PAGAMENTO de "${nome}"? (Cliente pagou a renovação)`)) {
             const hojeData = new Date().toISOString().split('T')[0];
             await updateDoc(doc(db, NOME_COLECAO, id), { status: "pago", dataPagamento: hojeData });
-            exibirToast(`✅ ${nome} marcado como PAGO! Cliente sai da lista até o próximo mês.`);
+            exibirToast(`✅ ${nome} marcado como PAGO e FINALIZADO! Sai da lista.`);
             await carregarClientes();
         }
     }
     
     async function reverterParaPendente(id, nome) {
-        if (confirm(`Reverter "${nome}" para PENDENTE? (Cliente não renovou)`)) {
+        if (confirm(`Reverter "${nome}" para PENDENTE?`)) {
             await updateDoc(doc(db, NOME_COLECAO, id), { status: "pendente", dataPagamento: null });
-            exibirToast(`📋 ${nome} voltou para PENDENTE`);
+            exibirToast(`📋 ${nome} voltou para PENDENTE - volta para lista de vencidos.`);
             await carregarClientes();
         }
     }
@@ -722,17 +753,14 @@
     
     window.filtrarPorStatus = (status) => {
         document.querySelectorAll(".filter-btn").forEach(btn => {
-            if (btn.dataset.filter === status) {
-                btn.classList.add("active");
-            } else {
-                btn.classList.remove("active");
-            }
+            if (btn.dataset.filter === status) btn.classList.add("active");
+            else btn.classList.remove("active");
         });
         filtroAtual = status;
         renderizarLista();
     };
     
-    // ==================== FUNÇÕES DE SELEÇÃO EM MASSA ====================
+    // ==================== FUNÇÕES DE SELEÇÃO ====================
     
     function toggleSelecionadoHoje(id, checked) {
         if (checked) selecionadosHoje.add(id);
@@ -749,38 +777,37 @@
     async function renovarSelecionadosHoje() {
         const clientesHoje = clientes.filter(c => c.status === "pendente" && isVenceHoje(c.diaVencimento));
         const selecionadosArray = clientesHoje.filter(c => selecionadosHoje.has(c.id));
-        
-        if (selecionadosArray.length === 0) {
-            exibirToast("Selecione clientes PENDENTES!", "#ff9800");
-            return;
-        }
-        
+        if (selecionadosArray.length === 0) { exibirToast("Selecione clientes PENDENTES!", "#ff9800"); return; }
         if (confirm(`Marcar ${selecionadosArray.length} cliente(s) como RENOVADO?`)) {
-            for (const c of selecionadosArray) {
-                await updateDoc(doc(db, NOME_COLECAO, c.id), { status: "renovado" });
-            }
+            for (const c of selecionadosArray) await updateDoc(doc(db, NOME_COLECAO, c.id), { status: "renovado" });
             selecionadosHoje.clear();
-            exibirToast(`🔄 ${selecionadosArray.length} cliente(s) marcados como RENOVADO!`);
+            exibirToast(`🔄 ${selecionadosArray.length} cliente(s) renovados! Continuam na lista.`);
+            await carregarClientes();
+        }
+    }
+    
+    async function antecipadoSelecionadosHoje() {
+        const clientesHoje = clientes.filter(c => c.status === "pendente" && isVenceHoje(c.diaVencimento));
+        const selecionadosArray = clientesHoje.filter(c => selecionadosHoje.has(c.id));
+        if (selecionadosArray.length === 0) { exibirToast("Selecione clientes PENDENTES!", "#ff9800"); return; }
+        if (confirm(`Marcar ${selecionadosArray.length} cliente(s) como PAGO ANTECIPADO?`)) {
+            const hojeData = new Date().toISOString().split('T')[0];
+            for (const c of selecionadosArray) await updateDoc(doc(db, NOME_COLECAO, c.id), { status: "antecipado", dataPagamento: hojeData });
+            selecionadosHoje.clear();
+            exibirToast(`💰 ${selecionadosArray.length} cliente(s) pagaram antecipado!`);
             await carregarClientes();
         }
     }
     
     async function pagarSelecionadosHoje() {
-        const clientesHoje = clientes.filter(c => c.status === "renovado" && isVenceHoje(c.diaVencimento));
+        const clientesHoje = clientes.filter(c => (c.status === "renovado" || c.status === "antecipado") && isVenceHoje(c.diaVencimento));
         const selecionadosArray = clientesHoje.filter(c => selecionadosHoje.has(c.id));
-        
-        if (selecionadosArray.length === 0) {
-            exibirToast("Selecione clientes RENOVADOS!", "#ff9800");
-            return;
-        }
-        
-        if (confirm(`Marcar ${selecionadosArray.length} cliente(s) como PAGO?`)) {
+        if (selecionadosArray.length === 0) { exibirToast("Selecione clientes RENOVADOS ou ANTECIPADO!", "#ff9800"); return; }
+        if (confirm(`Marcar ${selecionadosArray.length} cliente(s) como PAGO? (vão sair da lista)`)) {
             const hojeData = new Date().toISOString().split('T')[0];
-            for (const c of selecionadosArray) {
-                await updateDoc(doc(db, NOME_COLECAO, c.id), { status: "pago", dataPagamento: hojeData });
-            }
+            for (const c of selecionadosArray) await updateDoc(doc(db, NOME_COLECAO, c.id), { status: "pago", dataPagamento: hojeData });
             selecionadosHoje.clear();
-            exibirToast(`✅ ${selecionadosArray.length} cliente(s) marcados como PAGO!`);
+            exibirToast(`✅ ${selecionadosArray.length} cliente(s) pagos e finalizados!`);
             await carregarClientes();
         }
     }
@@ -788,12 +815,7 @@
     async function enviarSelecionadosHoje() {
         const clientesHoje = clientes.filter(c => c.status !== "pago" && isVenceHoje(c.diaVencimento));
         const selecionadosArray = clientesHoje.filter(c => selecionadosHoje.has(c.id));
-        
-        if (selecionadosArray.length === 0) {
-            exibirToast("Selecione pelo menos um cliente!", "#ff9800");
-            return;
-        }
-        
+        if (selecionadosArray.length === 0) { exibirToast("Selecione pelo menos um cliente!", "#ff9800"); return; }
         exibirToast(`📱 Enviando para ${selecionadosArray.length} cliente(s)...`);
         for (const c of selecionadosArray) {
             await enviarWhatsApp(c.nome, c.whatsapp, c.status);
@@ -803,6 +825,7 @@
     }
     
     function renderizarVenceHoje() {
+        // Mostra clientes que vencem hoje, EXCETO os que já estão pagos finalizados
         const clientesHoje = clientes.filter(c => c.status !== "pago" && isVenceHoje(c.diaVencimento));
         const container = document.getElementById("hojeList");
         document.getElementById("hojeCount").innerText = clientesHoje.length;
@@ -824,11 +847,15 @@
                         </div>
                     </div>
                     <div class="client-actions">
-                        <button class="icon-btn icon-btn-edit" onclick='editarWhatsApp("${c.id}", "${escapeHtml(c.nome)}", "${c.whatsapp || ""}")' title="Editar WhatsApp"><i class="fab fa-whatsapp"></i></button>
-                        <button class="icon-btn icon-btn-wpp" onclick='enviarWhatsApp("${escapeHtml(c.nome)}", "${c.whatsapp || ""}", "${c.status}")' title="Enviar WhatsApp"><i class="fab fa-whatsapp"></i> Enviar</button>
+                        <button class="icon-btn icon-btn-edit" onclick='editarWhatsApp("${c.id}", "${escapeHtml(c.nome)}", "${c.whatsapp || ""}")'><i class="fab fa-whatsapp"></i></button>
+                        <button class="icon-btn icon-btn-wpp" onclick='enviarWhatsApp("${escapeHtml(c.nome)}", "${c.whatsapp || ""}", "${c.status}")'><i class="fab fa-whatsapp"></i> Enviar</button>
                         ${c.status === "pendente" ? 
-                            `<button class="icon-btn icon-btn-renovar" onclick='marcarRenovado("${c.id}", "${escapeHtml(c.nome)}")' title="Marcar Renovado"><i class="fas fa-sync-alt"></i> Renovar</button>` : 
-                            `<button class="icon-btn icon-btn-pay" onclick='marcarPago("${c.id}", "${escapeHtml(c.nome)}")' title="Marcar Pago"><i class="fas fa-check"></i> Pagar</button>`
+                            `<button class="icon-btn icon-btn-renovar" onclick='marcarRenovado("${c.id}", "${escapeHtml(c.nome)}")' title="Renovar"><i class="fas fa-sync-alt"></i> Renovar</button>
+                             <button class="icon-btn icon-btn-antecipado" onclick='marcarAntecipado("${c.id}", "${escapeHtml(c.nome)}")' title="Pago Antecipado"><i class="fas fa-money-bill-wave"></i> Antecipado</button>` : 
+                            c.status === "renovado" ?
+                            `<button class="icon-btn icon-btn-pay" onclick='marcarPago("${c.id}", "${escapeHtml(c.nome)}")' title="Pagar e Finalizar"><i class="fas fa-check"></i> Pagar</button>` :
+                            c.status === "antecipado" ?
+                            `<button class="icon-btn icon-btn-pay" onclick='marcarPago("${c.id}", "${escapeHtml(c.nome)}")' title="Finalizar"><i class="fas fa-check"></i> Finalizar</button>` : ''
                         }
                     </div>
                 </div>
@@ -839,13 +866,14 @@
     function renderizarLista() {
         let filtrados = [...clientes];
         
+        // APLICA O FILTRO DE STATUS (apenas para visualização, não afeta a lógica de negócio)
         if (filtroAtual === "pendente") filtrados = filtrados.filter(c => c.status === "pendente");
         if (filtroAtual === "renovado") filtrados = filtrados.filter(c => c.status === "renovado");
+        if (filtroAtual === "antecipado") filtrados = filtrados.filter(c => c.status === "antecipado");
         if (filtroAtual === "pago") filtrados = filtrados.filter(c => c.status === "pago");
-        if (filtroAtual === "vencido") filtrados = filtrados.filter(c => c.status !== "pago" && isVencido(c.diaVencimento));
         if (termoBusca) filtrados = filtrados.filter(c => c.nome.toLowerCase().includes(termoBusca));
         
-        // Ordenar: vencidos por mais atraso, depois próximos
+        // Ordenar: vencidos primeiro (mais atraso primeiro), depois próximos
         filtrados.sort((a, b) => {
             const aVencido = isVencido(a.diaVencimento) && a.status !== "pago";
             const bVencido = isVencido(b.diaVencimento) && b.status !== "pago";
@@ -880,7 +908,7 @@
                                 <div class="client-title">
                                     ${escapeHtml(c.nome)}
                                     ${getStatusBadge(c.status)}
-                                    ${vencido ? '<span class="status-vencido"><i class="fas fa-exclamation-triangle"></i> Vencido</span>' : ''}
+                                    ${vencido ? '<span class="status-vencido"><i class="fas fa-exclamation-triangle"></i> Vencido!</span>' : ''}
                                     ${venceHoje ? '<span class="status-hoje"><i class="fas fa-bell"></i> Vence hoje!</span>' : ''}
                                 </div>
                                 <div class="client-whats"><i class="fab fa-whatsapp"></i> ${c.whatsapp ? formatarTelefone(c.whatsapp) : '—'}</div>
@@ -891,18 +919,21 @@
                             </div>
                         </div>
                         <div class="action-buttons">
-                            <button class="small-btn" style="background:#25D366; color:white;" onclick='enviarWhatsApp("${escapeHtml(c.nome)}", "${c.whatsapp || ""}", "${c.status}")' title="WhatsApp"><i class="fab fa-whatsapp"></i></button>
-                            <button class="small-btn" style="background:#9c27b0; color:white;" onclick='editarWhatsApp("${c.id}", "${escapeHtml(c.nome)}", "${c.whatsapp || ""}")' title="Editar"><i class="fas fa-edit"></i></button>
+                            <button class="small-btn" style="background:#25D366; color:white;" onclick='enviarWhatsApp("${escapeHtml(c.nome)}", "${c.whatsapp || ""}", "${c.status}")'><i class="fab fa-whatsapp"></i> Enviar</button>
+                            <button class="small-btn" style="background:#9c27b0; color:white;" onclick='editarWhatsApp("${c.id}", "${escapeHtml(c.nome)}", "${c.whatsapp || ""}")'><i class="fas fa-edit"></i> Edit</button>
                             ${c.status === "pendente" ? 
-                                `<button class="small-btn" style="background:#2196f3; color:white;" onclick='marcarRenovado("${c.id}", "${escapeHtml(c.nome)}")' title="Renovar"><i class="fas fa-sync-alt"></i> Renovar</button>
-                                 <button class="small-btn" style="background:#4caf50; color:white;" onclick='marcarPago("${c.id}", "${escapeHtml(c.nome)}")' title="Pagar"><i class="fas fa-check"></i> Pagar</button>` : 
+                                `<button class="small-btn" style="background:#2196f3; color:white;" onclick='marcarRenovado("${c.id}", "${escapeHtml(c.nome)}")'><i class="fas fa-sync-alt"></i> Renovar</button>
+                                 <button class="small-btn" style="background:#ff9800; color:white;" onclick='marcarAntecipado("${c.id}", "${escapeHtml(c.nome)}")'><i class="fas fa-money-bill-wave"></i> Antecipado</button>` : 
                                 c.status === "renovado" ?
-                                `<button class="small-btn" style="background:#4caf50; color:white;" onclick='marcarPago("${c.id}", "${escapeHtml(c.nome)}")' title="Pagar"><i class="fas fa-check"></i> Pagar</button>
-                                 <button class="small-btn" style="background:#ff9800; color:white;" onclick='reverterParaPendente("${c.id}", "${escapeHtml(c.nome)}")' title="Reverter"><i class="fas fa-undo"></i> Reverter</button>` :
-                                `<button class="small-btn" style="background:#ff9800; color:white;" onclick='reverterParaPendente("${c.id}", "${escapeHtml(c.nome)}")' title="Reverter"><i class="fas fa-undo"></i> Reverter</button>`
+                                `<button class="small-btn" style="background:#4caf50; color:white;" onclick='marcarPago("${c.id}", "${escapeHtml(c.nome)}")'><i class="fas fa-check"></i> Pagar</button>
+                                 <button class="small-btn" style="background:#f44336; color:white;" onclick='reverterParaPendente("${c.id}", "${escapeHtml(c.nome)}")'><i class="fas fa-undo"></i> Reverter</button>` :
+                                c.status === "antecipado" ?
+                                `<button class="small-btn" style="background:#4caf50; color:white;" onclick='marcarPago("${c.id}", "${escapeHtml(c.nome)}")'><i class="fas fa-check"></i> Finalizar</button>
+                                 <button class="small-btn" style="background:#f44336; color:white;" onclick='reverterParaPendente("${c.id}", "${escapeHtml(c.nome)}")'><i class="fas fa-undo"></i> Reverter</button>` :
+                                `<button class="small-btn" style="background:#f44336; color:white;" onclick='reverterParaPendente("${c.id}", "${escapeHtml(c.nome)}")'><i class="fas fa-undo"></i> Reverter</button>`
                             }
-                            <button class="small-btn" style="background:#607d8b; color:white;" onclick='editarDia("${c.id}", "${escapeHtml(c.nome)}", ${c.diaVencimento})' title="Editar dia"><i class="fas fa-calendar-alt"></i></button>
-                            <button class="small-btn" style="background:#f44336; color:white;" onclick='excluirCliente("${c.id}", "${escapeHtml(c.nome)}")' title="Excluir"><i class="fas fa-trash-alt"></i></button>
+                            <button class="small-btn" style="background:#607d8b; color:white;" onclick='editarDia("${c.id}", "${escapeHtml(c.nome)}", ${c.diaVencimento})'><i class="fas fa-calendar-alt"></i> Dia</button>
+                            <button class="small-btn" style="background:#f44336; color:white;" onclick='excluirCliente("${c.id}", "${escapeHtml(c.nome)}")'><i class="fas fa-trash-alt"></i></button>
                         </div>
                     </div>
                 </div>
@@ -915,14 +946,14 @@
     function atualizarStats() {
         const pendentes = clientes.filter(c => c.status === "pendente");
         const renovados = clientes.filter(c => c.status === "renovado");
+        const antecipado = clientes.filter(c => c.status === "antecipado");
         const pagos = clientes.filter(c => c.status === "pago");
-        const vencidos = clientes.filter(c => c.status !== "pago" && isVencido(c.diaVencimento));
         
         document.getElementById("totalCount").innerText = clientes.length;
         document.getElementById("pendentesCount").innerText = pendentes.length;
         document.getElementById("renovadosCount").innerText = renovados.length;
+        document.getElementById("antecipadoCount").innerText = antecipado.length;
         document.getElementById("pagosCount").innerText = pagos.length;
-        document.getElementById("vencidosCount").innerText = vencidos.length;
     }
     
     async function carregarClientes() {
@@ -958,7 +989,7 @@
             whatsapp: telefone,
             diaVencimento: parseInt(dia),
             status: status,
-            dataPagamento: status === "pago" ? new Date().toISOString().split('T')[0] : null,
+            dataPagamento: (status === "antecipado" || status === "pago") ? new Date().toISOString().split('T')[0] : null,
             criadoEm: new Date().toISOString()
         });
         
@@ -978,6 +1009,7 @@
     window.toggleSelecionadoHoje = toggleSelecionadoHoje;
     window.enviarWhatsApp = enviarWhatsApp;
     window.marcarRenovado = marcarRenovado;
+    window.marcarAntecipado = marcarAntecipado;
     window.marcarPago = marcarPago;
     window.reverterParaPendente = reverterParaPendente;
     window.excluirCliente = excluirCliente;
@@ -989,67 +1021,59 @@
         renderizarLista();
     };
     
-    // Ações em massa na lista principal
+    // Ações em massa
     function selecionarTodos() {
         let filtrados = [...clientes];
         if (filtroAtual === "pendente") filtrados = filtrados.filter(c => c.status === "pendente");
         if (filtroAtual === "renovado") filtrados = filtrados.filter(c => c.status === "renovado");
+        if (filtroAtual === "antecipado") filtrados = filtrados.filter(c => c.status === "antecipado");
         if (filtroAtual === "pago") filtrados = filtrados.filter(c => c.status === "pago");
-        if (filtroAtual === "vencido") filtrados = filtrados.filter(c => c.status !== "pago" && isVencido(c.diaVencimento));
         if (termoBusca) filtrados = filtrados.filter(c => c.nome.toLowerCase().includes(termoBusca));
-        
         filtrados.forEach(c => selecionados.add(c.id));
         renderizarLista();
         exibirToast(`✅ ${selecionados.size} clientes selecionados!`);
     }
     
-    function desselecionarTodos() {
-        selecionados.clear();
-        renderizarLista();
-    }
+    function desselecionarTodos() { selecionados.clear(); renderizarLista(); }
     
     async function renovarSelecionados() {
         const selecionadosArray = clientes.filter(c => selecionados.has(c.id) && c.status === "pendente");
-        if (selecionadosArray.length === 0) {
-            exibirToast("Selecione clientes PENDENTES!", "#ff9800");
-            return;
-        }
-        
-        if (confirm(`Marcar ${selecionadosArray.length} cliente(s) como RENOVADO?`)) {
-            for (const c of selecionadosArray) {
-                await updateDoc(doc(db, NOME_COLECAO, c.id), { status: "renovado" });
-            }
+        if (selecionadosArray.length === 0) { exibirToast("Selecione clientes PENDENTES!", "#ff9800"); return; }
+        if (confirm(`Marcar ${selecionadosArray.length} cliente(s) como RENOVADO? (Continuam na lista)`)) {
+            for (const c of selecionadosArray) await updateDoc(doc(db, NOME_COLECAO, c.id), { status: "renovado" });
             selecionados.clear();
-            exibirToast(`🔄 ${selecionadosArray.length} cliente(s) renovados!`);
+            exibirToast(`🔄 ${selecionadosArray.length} cliente(s) renovados! Continuam na lista até pagar.`);
+            await carregarClientes();
+        }
+    }
+    
+    async function antecipadoSelecionados() {
+        const selecionadosArray = clientes.filter(c => selecionados.has(c.id) && c.status === "pendente");
+        if (selecionadosArray.length === 0) { exibirToast("Selecione clientes PENDENTES!", "#ff9800"); return; }
+        if (confirm(`Marcar ${selecionadosArray.length} cliente(s) como PAGO ANTECIPADO?`)) {
+            const hojeData = new Date().toISOString().split('T')[0];
+            for (const c of selecionadosArray) await updateDoc(doc(db, NOME_COLECAO, c.id), { status: "antecipado", dataPagamento: hojeData });
+            selecionados.clear();
+            exibirToast(`💰 ${selecionadosArray.length} cliente(s) pagaram antecipado!`);
             await carregarClientes();
         }
     }
     
     async function pagarSelecionados() {
-        const selecionadosArray = clientes.filter(c => selecionados.has(c.id) && c.status === "renovado");
-        if (selecionadosArray.length === 0) {
-            exibirToast("Selecione clientes RENOVADOS!", "#ff9800");
-            return;
-        }
-        
-        if (confirm(`Marcar ${selecionadosArray.length} cliente(s) como PAGO?`)) {
+        const selecionadosArray = clientes.filter(c => selecionados.has(c.id) && (c.status === "renovado" || c.status === "antecipado"));
+        if (selecionadosArray.length === 0) { exibirToast("Selecione clientes RENOVADOS ou ANTECIPADO!", "#ff9800"); return; }
+        if (confirm(`Marcar ${selecionadosArray.length} cliente(s) como PAGO? (Vão sair da lista)`)) {
             const hojeData = new Date().toISOString().split('T')[0];
-            for (const c of selecionadosArray) {
-                await updateDoc(doc(db, NOME_COLECAO, c.id), { status: "pago", dataPagamento: hojeData });
-            }
+            for (const c of selecionadosArray) await updateDoc(doc(db, NOME_COLECAO, c.id), { status: "pago", dataPagamento: hojeData });
             selecionados.clear();
-            exibirToast(`✅ ${selecionadosArray.length} cliente(s) pagos!`);
+            exibirToast(`✅ ${selecionadosArray.length} cliente(s) pagos e finalizados! Saíram da lista.`);
             await carregarClientes();
         }
     }
     
     async function enviarSelecionados() {
         const selecionadosArray = clientes.filter(c => selecionados.has(c.id));
-        if (selecionadosArray.length === 0) {
-            exibirToast("Selecione pelo menos um cliente!", "#ff9800");
-            return;
-        }
-        
+        if (selecionadosArray.length === 0) { exibirToast("Selecione pelo menos um cliente!", "#ff9800"); return; }
         exibirToast(`📱 Enviando para ${selecionadosArray.length} cliente(s)...`);
         for (const c of selecionadosArray) {
             await enviarWhatsApp(c.nome, c.whatsapp, c.status);
@@ -1063,10 +1087,12 @@
     document.getElementById("btnSelecionarTodos").addEventListener("click", selecionarTodos);
     document.getElementById("btnDesselecionarTodos").addEventListener("click", desselecionarTodos);
     document.getElementById("btnRenovarMassa").addEventListener("click", renovarSelecionados);
+    document.getElementById("btnAntecipadoMassa").addEventListener("click", antecipadoSelecionados);
     document.getElementById("btnPagarMassa").addEventListener("click", pagarSelecionados);
     document.getElementById("btnEnviarMassa").addEventListener("click", enviarSelecionados);
     document.getElementById("btnSelecionarTodosHoje").addEventListener("click", selecionarTodosHoje);
     document.getElementById("btnRenovarSelecionadosHoje").addEventListener("click", renovarSelecionadosHoje);
+    document.getElementById("btnAntecipadoSelecionadosHoje").addEventListener("click", antecipadoSelecionadosHoje);
     document.getElementById("btnPagarSelecionadosHoje").addEventListener("click", pagarSelecionadosHoje);
     document.getElementById("btnEnviarSelecionadosHoje").addEventListener("click", enviarSelecionadosHoje);
     
